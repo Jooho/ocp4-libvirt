@@ -1,5 +1,10 @@
 # OpenShift 4 UPI Installation 
 
+## Branch
+- fedora31_podman <tested 2020.01.15>
+- fedora28_docker <tested 2019.07>
+
+
 This script is for the demonstration how you can install Openshift 4 by UPI for bare metal with KVM. 
 
 The script is created by ansible, terraform.
