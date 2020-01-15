@@ -1,0 +1,20 @@
+- name: Pre-requisites Processes
+  hosts: localhost
+  become: yes
+  become_user: root
+  gather_facts: no
+  vars:
+   - required_packages:
+     - dnf-plugins-core
+     - podman
+     - httpd
+  tasks:
+#    - name: Install cri-o (Since Fedora 30, the install way is changed)
+#      shell: "VERSION=1.14; dnf module enable -y cri-o:$VERSION;  dnf install -y cri-o"
+#      become: yes
+
+    - name: Install required packages
+      yum:
+        name: "{{ required_packages }}"
+        state: present
+      become: yes

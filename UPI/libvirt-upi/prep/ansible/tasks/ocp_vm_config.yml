@@ -1,0 +1,69 @@
+- name: Generate OCP4 VM moudle tf file
+  hosts: hypervisor
+  become: yes
+  become_user: root
+  gather_facts: no
+
+  pre_tasks:
+    - name: Create OCP4 cluster dicrectory
+      file:
+        path: "../../{{cluster_name}}"
+        state: directory
+
+  tasks:
+    - name: Create OCP4 install-config
+      template:
+        src: ../templates/ocp4_install_config.yml.j2
+        dest: "../../{{cluster_name}}/install-config.yaml"
+
+    - name: Create Ignition for master/worker/bootstrap
+      command: "openshift-install create ignition-configs --dir ../../{{ cluster_name }}"
+
+#    - name: Gather files cluster folder
+#      find:
+#        paths: "../../{{ cluster_name }}"
+#        recurse: yes
+#      register: file_list
+#      become: yes
+# 
+#    - name: Change permission of all files under cluster folder
+#      file:
+#        path: "{{ item.path }}"
+#        mode: 0775
+#      with_items:
+#      - "{{ file_list.files }}" 
+#      become: yes
+
+
+    - name: Change permission of ignition files
+      file:
+        path: "../../{{ cluster_name }}"
+        mode: '0775'
+        recurse: yes
+        state: directory
+      become: yes
+
+    - name: Copy Inition files to httpd document path
+      copy:
+        src: "../../{{ cluster_name }}/{{ item }}"
+        dest: "{{ webserver_doc_path }}/{{ item }}"
+      with_items:
+      - bootstrap.ign
+      - master.ign
+      - worker.ign
+      become: true
+
+    - name: Change HTTPD port to 9000
+      lineinfile:
+        path: /etc/httpd/conf/httpd.conf
+        regexp: 'Listen'
+        line: "Listen 9000"
+      become: true
+
+    - name: Start HTTPD Server
+      service:
+        name: httpd
+        state: restarted
+      become: true
+
+
