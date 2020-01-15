@@ -30,7 +30,7 @@ Please refer this [slide](https://www.slideshare.net/jooholee81/openshift4-insta
 
 **2. Prep (using ansible + terraform)**
 - install_packages.yml (ansible)
-    - podman
+    - docker
     - httpd
     - download_files.yml (ansible)
       - terraform_binary 

@@ -68,14 +68,10 @@
       - "{{ libvirt_storage_pool_path | default('/var/lib/libvirt/images/ocp4') }}"
 
     - name: kill matchbox container
-      shell: "podman rm --force matchbox_server"
-      become: true
+      docker_container:
+        name: matchbox_server
+        state: absent
         
-    #- name: kill matchbox container
-    #  docker_container:
-    #    name: matchbox_server
-    #    state: absent
-
     - name: Remove ssh known_hosts
       lineinfile:
          path: "{{ lookup('env','HOME')}}/.ssh/known_hosts"
