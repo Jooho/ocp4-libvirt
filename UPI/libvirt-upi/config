@@ -68,7 +68,7 @@ rhcos_initramfs_src="https://mirror.openshift.com/pub/openshift-v4/dependencies/
 rhcos_bios_src="https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/pre-release/4.2.0-rc.5/rhcos-42.80.20191002.0-metal-bios.raw.gz"
 
 # openshift installer
-openshift_installer_src="https://mirror.openshift.com/pub/openshift-v4/clients/ocp-dev-preview/latest/openshift-install-linux-4.4.0-0.nightly-2020-01-14-004804.tar.gz"
+openshift_installer_src="https://mirror.openshift.com/pub/openshift-v4/clients/ocp-dev-preview/latest-4.3/openshift-install-linux-4.3.0-0.nightly-2020-01-20-183918.tar.gz"
 
 
 
