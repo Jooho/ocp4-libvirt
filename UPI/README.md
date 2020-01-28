@@ -1,8 +1,9 @@
 # OpenShift 4 UPI Installation 
 
 ## Branch
-- fedora31_podman <tested 2020.01.15>
-- fedora28_docker <tested 2019.07>
+- fedora31_ocp43_podman <tested 2020.01.28>
+- fedora31_ocp42_podman <tested 2020.01.15>
+- fedora28_ocp41_docker <tested 2019.07>
 
 
 This script is for the demonstration how you can install Openshift 4 by UPI for bare metal with KVM. 
@@ -130,3 +131,10 @@ oc --config ${INSTALL_DIR}/auth/kubeconfig get csr -o json | jq -r '.items[] | s
 ```
 oc --config ${INSTALL_DIR}/auth/kubeconfig get clusteroperators
 ```
+
+## Errors
+- Network is not started
+  - Solution: Restart libvirtd
+
+- Network `upi` and storage `ocp4` already exist
+  - Solution: Delete libvirt component Network `upi` and Storage `ocp4` manaully
