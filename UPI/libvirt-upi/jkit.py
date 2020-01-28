@@ -89,15 +89,20 @@ def launch(cmd=None,
          ansible-playbook %s  -i ansible/inventory ansible/playbooks/prep.yml  -e @ansible/defaults/main.yml --flush-cache; \
          terraform init ; terraform get ; terraform apply -auto-approve; \
          cd ../ocp4;  terraform init ; terraform get ; terraform apply -auto-approve; \
-         cd ../prep; sudo openshift-install --dir %s wait-for bootstrap-complete'
+         cd ../prep; sudo openshift-install --dir %s wait-for bootstrap-complete; \
+         echo "Waiting 5 mins"; sleep 300; \
+         oc --config %s/auth/kubeconfig patch configs.imageregistry.operator.openshift.io cluster --type merge --patch \'{"spec":{"storage":{"emptydir":{}}}}\'; \
+         ansible-playbook %s -i ansible/inventory ansible/tasks/lb_rm_bootstrap.yml ; \
+         sudo openshift-install --dir %s/ wait-for install-complete'
+         
 
-                % (verbosity, verbosity, verbosity, clusterName)
+                % (verbosity, verbosity, verbosity, clusterName, clusterName, verbosity, clusterName)
        )
 
     if cmd == 'post':
         status = os.system(
         'cd ./prep; \
-         oc --config %s/auth/kubeconfig patch configs.imageregistry.operator.openshift.io cluster --type merge --patch \'{"spec":{"storage":{"emptyDir":{}}}}\'; \
+         oc --config %s/auth/kubeconfig patch configs.imageregistry.operator.openshift.io cluster --type merge --patch \'{"spec":{"storage":{"emptydir":{}}}}\'; \
          ansible-playbook %s -i ansible/inventory ansible/tasks/lb_rm_bootstrap.yml ; \
          sudo openshift-install --dir %s/ wait-for install-complete'
 
