@@ -6,12 +6,12 @@
     hypervisor_packages:
       - 'libvirt'
       - 'libvirt-devel'
-      - 'libselinux-python'
+      - 'python3-libselinux'
       - 'libvirt-client'
-      - 'python-netaddr'
-      - 'python-libvirt'
-      - 'python-lxml'
       - 'virt-manager'
+      - 'python3-netaddr'
+      - 'python3-libvirt'
+      - 'python3-lxml'
     libvirt_settings:
       - {name: 'listen_tls', val: 0}
       - {name: 'listen_tcp', val: 1}
