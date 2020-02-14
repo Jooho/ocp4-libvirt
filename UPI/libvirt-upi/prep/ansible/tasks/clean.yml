@@ -3,7 +3,7 @@
   gather_facts: no
   become: yes
   vars:
-    root_path: "../../../"
+    root_path: "../../.."
     
   tasks:
     - name: Find *.retry files
