@@ -17,4 +17,5 @@
       yum:
         name: "{{ required_packages }}"
         state: present
+        update_cache: yes
       become: yes

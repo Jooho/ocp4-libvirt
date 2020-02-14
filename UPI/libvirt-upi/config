@@ -68,7 +68,7 @@ rhcos_initramfs_src="https://mirror.openshift.com/pub/openshift-v4/dependencies/
 rhcos_bios_src="https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/4.3/4.3.0/rhcos-4.3.0-x86_64-metal.raw.gz"
 
 # openshift installer
-openshift_installer_src="https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest/openshift-install-linux-4.3.0.tar.gz"
+openshift_installer_src="https://mirror.openshift.com/pub/openshift-v4/clients/ocp/4.3.2/openshift-install-linux-4.3.2.tar.gz"
 
 
 
