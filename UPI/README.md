@@ -22,6 +22,22 @@ Please refer this [slide](https://www.slideshare.net/jooholee81/openshift4-insta
 
 [![OpenShift 4 installation using UPI(Bare metal) with KVM Demo ](http://img.youtube.com/vi/UySkD8iWoSU/0.jpg)](https://www.youtube.com/watch?v=UySkD8iWoSU)
 
+## Pre-requisites
+  - Use non-root user which is added to sudoers
+    ```
+    jooho	ALL=(ALL) 	NOPASSWD: ALL
+    %wheel	ALL=(ALL)	NOPASSWD: ALL
+    ```
+  - Add libvirt group to the user (Change %USER_NAME)
+    ```
+    usermod -G libvirt %USER_NAME
+    ```
+  - Export LIBVIRT_DEFAULT_URI
+    ```
+    export LIBVIRT_DEFAULT_URI=qemu:///system
+    ```
+
+
 ## Steps
 **1. Init  (using ansible)**
    - Create:
