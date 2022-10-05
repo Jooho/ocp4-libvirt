@@ -1,0 +1,16 @@
+bin/*
+*.log
+*hcl
+.terraform/
+inventory
+matchbox-main
+upi/
+connection.tf
+connection.tf.*
+matchbox_module.tf
+meta-data
+terraform.tfstate
+terraform.tfvars
+user-data
+bootp.xsl
+ocp_module.tf

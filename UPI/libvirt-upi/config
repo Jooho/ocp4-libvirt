@@ -2,15 +2,16 @@
 ##################################### Mandatory ######################################
 # OCP 
 cluster_name="upi"
-ocp_version="4.3"
+ocp_version="4.11"
 worker_nodes=1
 master_nodes=1
 
-pull_secret_path="/home/jooho/Downloads/pull-secret"
+# pull_secret_path="/home/jooho/Downloads/pull-secret"
+pull_secret_path="/home/jooho/temp/disconnected_install/pull_secret"
 ssh_public_key_path="/home/jooho/.ssh/id_rsa.pub"
 
 rhcos_kernel_path=assets/rhcos/{{ ocp_version }}/rhcos-kernel
-rhcos_initramfs_path=assets/rhcos//{{ ocp_version }}/rhcos-initramfs.img
+rhcos_initramfs_path=assets/rhcos/{{ ocp_version }}/rhcos-initramfs.img
 rhcos_os_image_url=192.168.222.1:9000/rhcos-bios.raw.gz
 
 #rhcos_install_dev=vda
@@ -35,7 +36,7 @@ rhcos_os_image_url=192.168.222.1:9000/rhcos-bios.raw.gz
 
 # Load Balancer
 #lb_os_type=centos 
-#lb_vm_volume_source="https://cloud.centos.org/centos/7/images/CentOS-7-x86_64-GenericCloud.qcow2"
+lb_vm_volume_source="https://cloud.centos.org/centos/8/x86_64/images/CentOS-8-GenericCloud-8.4.2105-20210603.0.x86_64.qcow2"
 #lb_memory="512"
 #lb_vcpu="1"
 #lb_disk="80" #G
@@ -63,14 +64,12 @@ worker_vm_vcpu="4"
 
 # OCP 4.2
 # rhcos
-rhcos_kernel_src="https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/4.3/4.3.0/rhcos-4.3.0-x86_64-installer-kernel"
-rhcos_initramfs_src="https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/4.3/4.3.0/rhcos-4.3.0-x86_64-installer-initramfs.img"
-rhcos_bios_src="https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/4.3/4.3.0/rhcos-4.3.0-x86_64-metal.raw.gz"
+rhcos_kernel_src="https://rhcos.mirror.openshift.com/art/storage/releases/rhcos-4.11/411.86.202208112011-0/x86_64/rhcos-411.86.202208112011-0-live-kernel-x86_64"
+rhcos_initramfs_src="https://rhcos.mirror.openshift.com/art/storage/releases/rhcos-4.11/411.86.202208112011-0/x86_64/rhcos-411.86.202208112011-0-live-initramfs.x86_64.img"
+rhcos_bios_src="https://rhcos.mirror.openshift.com/art/storage/releases/rhcos-4.11/411.86.202208112011-0/x86_64/rhcos-411.86.202208112011-0-live-rootfs.x86_64.img"
 
 # openshift installer
-openshift_installer_src="https://mirror.openshift.com/pub/openshift-v4/clients/ocp/4.3.2/openshift-install-linux-4.3.2.tar.gz"
-
-
+openshift_installer_src="https://mirror.openshift.com/pub/openshift-v4/clients/ocp/4.11.7/openshift-install-linux.tar.gz"
 
 
 
