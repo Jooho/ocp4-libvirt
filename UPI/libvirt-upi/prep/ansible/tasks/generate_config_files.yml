@@ -6,8 +6,16 @@
 
   vars:
     ssh_public_key_content: "{{ lookup('file', ssh_public_key_path ) }}"
-    pull_secret_content: "'{{ lookup('file', pull_secret_path ) }}'"
 
+  pre_tasks:
+   - name: Delete tmp pull-secret
+     file: 
+        path: "/tmp/{{item}}"
+        state: absent
+     with_items:
+     - "{{pull_secret_path|basename}}"
+     - "pull-secret"
+        
   tasks:
    - name: Create terraform.tfvar file for prep
      template:
@@ -19,9 +27,27 @@
    - name: Create connection.tf 
      template: 
        src: ../templates/connection.tf.j2
-       dest: ../../connection.tf
+       dest: "{{ item }}"
        backup: yes
        force: yes
+     with_items:
+      - "../../connection.tf"
+      - "../../../ocp4/connection.tf"
+   
+   - name: Update pull-secret
+     shell: "{{ item }}"
+     with_items:
+     - "podman login --authfile /tmp/pull-secret  -u {{quay_id}}   -p {{quay_pw}} {{quay_local_registry}} --tls-verify=false"
+     - "jq -c  '.' /tmp/pull-secret > {{pull_secret_json_path}}"
+     when: disconnected is defined
+     become: false
+
+   - name: Convert pull-secret text to json
+     shell: "cp {{pull_secret_path}}  {{pull_secret_json_path}}"
+     when: disconnected is not defined
+   
+   - set_fact:
+      pull_secret_json_content: "'{{ lookup('file', pull_secret_json_path ) }}'"
 
    - name: Generate inventory file
      template:
@@ -29,6 +55,7 @@
        dest: ../inventory
        backup: yes
        force: yes
+     become: false
  
    - name: Generate Libvirt network xlst file for bootp(iPXE)
      template:

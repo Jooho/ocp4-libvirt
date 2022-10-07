@@ -17,6 +17,7 @@
         name: "lb.{{ cluster_name }}.{{ network_domain }}"
         groups: lb
 
+
 - name: Setup HAproxy in LB (Configure haproxy)
   hosts: lb
   become: true   
@@ -24,10 +25,22 @@
   remote_user: centos
   gather_facts: no 
   pre_tasks:
+    - name: Fix CentOS yum repository
+      shell: "{{ item }}"
+      with_items:
+      - "sed -i 's/mirrorlist/#mirrorlist/g' /etc/yum.repos.d/CentOS-*"
+      - "sed -i 's|#baseurl=http://mirror.centos.org|baseurl=http://vault.centos.org|g' /etc/yum.repos.d/CentOS-*"
+      become: true
+      
     - name: Install HAProxy
       yum :
         name: "haproxy"
         state: latest
+      become: true
+
+    - name: Disable SELinux
+      selinux:
+        state: disabled
       become: true
   tasks:
     - name: Copy HAProxy Config
@@ -51,7 +64,7 @@
         setype: http_port_t
         state: present
 
-    - name: Enable service haproxy
+    - name: Enable/Restart service haproxy
       service:
         name: haproxy
         enabled: yes

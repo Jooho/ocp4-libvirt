@@ -1,6 +1,7 @@
 # OpenShift 4 UPI Installation 
 
 ## Branch
+- fedora35_ocp411_podman <tested 2022.10.07>
 - fedora31_ocp43_podman <tested 2020.01.28>
 - fedora31_ocp42_podman <tested 2020.01.15>
 - fedora28_ocp41_docker <tested 2019.07>
@@ -35,10 +36,14 @@ Please refer this [slide](https://www.slideshare.net/jooholee81/openshift4-insta
   - Export LIBVIRT_DEFAULT_URI
     ```
     export LIBVIRT_DEFAULT_URI=qemu:///system
+    or 
+    export LIBVIRT_DEFAULT_URI=qemu:///system?socket=/var/run/libvirt/virtqemud-sock
     ```
 
 
 ## Steps
+
+### Normal installation with internet
 **1. Init  (using ansible)**
    - Create:
      -  terraform
@@ -92,6 +97,10 @@ Please refer this [slide](https://www.slideshare.net/jooholee81/openshift4-insta
 - Remove bootstrap from lb pool
 - Wait for install-complete
   
+### Disconnected Installation 
+**1. Quay**
+Deploy Quay Registry as a local registry and mirror required images
+
 
 
 ## jkit commands
@@ -100,29 +109,41 @@ jkit is python script to provide easier way to config each steps.
 
 **1. Init**
     ```
-    ./jkit.py init
+    ./jkit.py init -t [disconnect]
     ```
-
+   
 **2. Prep**
     ```
-   ./jkit.py prep -t [apply,dtr]  # dtr = destory
+   ./jkit.py prep -t [disconnect] -op [apply,dtr]  # dtr = destory
     ```
 
 **3. OCP**
     ```
-    ./jkit.py ocp -t [apply,dtr]   # dtr = destory
+    ./jkit.py ocp -op [apply,dtr]   # dtr = destory
     ```
 **4. Post**
     ```
     ./jkit.py post
     ```
-
+**5. Quay**
+    ```
+    ./jkit.py quay
+    ```
 - Additional cmds
-    - **Clean**
+    - **Clean**        
+      - Delete default list
         ```
-        jkit clean
+        ./jkit.py clean
         ```
-
+      -  Delete quay/matchbox/network + default list
+          ```
+          ./jkit.py clean --type=all 
+          ```
+      -  Delete quay
+          ```
+          ./jkit.py clean --type=disconnected
+          ```
+    
     - **Update**
         ```
         jkit.py update -t [inventory(default),ocp,ocp_module]

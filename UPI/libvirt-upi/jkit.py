@@ -9,10 +9,10 @@ from io import StringIO
 @click.command()
 @click.argument('cmd',
               default='init',
-              type=click.Choice(['init', 'prep', 'ocp', 'update', 'clean', 'oneshot' , 'post']))
+              type=click.Choice(['init', 'prep', 'ocp', 'quay','update', 'clean', 'oneshot' , 'post']))
 @click.option('-t','--type',
               default='inventory',
-              type=click.Choice(['inventory', 'ocp', 'all', 'conf']))
+              type=click.Choice(['inventory', 'ocp', 'all', 'conf','disconnect']))
 @click.option('-op','--operate',
               default='apply',
               type=click.Choice(['apply', 'dtr']))
@@ -25,7 +25,8 @@ def launch(cmd=None,
            clusterName=None,
            verbose=0):
 
-
+    disconnected =""
+    cleanAll=""
     pat = re.compile("cluster_name")
     with open ('config', 'rt') as configfile:  
        for line in configfile:      
@@ -38,26 +39,32 @@ def launch(cmd=None,
     else:
         verbosity = ''
 
+    if type == 'disconnect':
+       disconnected="-e disconnected=true"
+    if type == 'all':
+       cleanAll="-e cleanAll=true"
+       
 # Construct ansible command
     if cmd == 'init':
        status = os.system(
-         'ansible-playbook %s  -i config prep/ansible/tasks/generate_config_files.yml --flush-cache; \
+         'ansible-playbook %s  -i config prep/ansible/tasks/setting_init_env.yml %s --flush-cache; \
+         ansible-playbook %s  -i config prep/ansible/tasks/generate_config_files.yml %s --flush-cache; \
          cd prep;  \
          ansible-playbook %s  -i ansible/inventory ansible/tasks/cloud_init.yml  --flush-cache' \
 
-                % (verbosity, verbosity)
+                % (verbosity, disconnected, verbosity, disconnected, verbosity )
        )
 
     if cmd == 'prep':
        if operate == 'apply':
           status = os.system(
            'cd prep;  \
-            ansible-playbook %s  -i ansible/inventory ansible/playbooks/prep.yml  -e @ansible/defaults/main.yml --flush-cache; \
+            ansible-playbook %s  -i ansible/inventory ansible/playbooks/prep.yml  -e @ansible/defaults/main.yml %s --flush-cache; \
             terraform init ; \
             terraform get ; \
             terraform apply -auto-approve' 
 
-                % (verbosity)
+                % (verbosity, disconnected)
           )
        if operate == 'dtr':
           status = os.system(
@@ -71,7 +78,10 @@ def launch(cmd=None,
            'cd ocp4;  \
             terraform init ; \
             terraform get ; \
-            terraform apply -auto-approve' 
+            terraform apply -auto-approve ;\
+            cd ../prep; sudo ./ansible/bin/openshift-install --dir %s wait-for bootstrap-complete; cd ../'
+             
+                % (clusterName)
           )
        if operate == 'dtr':
           status = os.system(
@@ -83,30 +93,29 @@ def launch(cmd=None,
 
     if cmd == 'oneshot':
        status = os.system(
-        'ansible-playbook %s  -i config prep/ansible/tasks/generate_config_files.yml --flush-cache; \
+        'ansible-playbook %s  -i config prep/ansible/tasks/setting_init_env.yml %s --flush-cache; \
+         ansible-playbook %s %s -i config prep/ansible/tasks/generate_config_files.yml --flush-cache; \
          cd prep;  \
-         ansible-playbook %s  -i ansible/inventory ansible/tasks/cloud_init.yml  --flush-cache; \
-         ansible-playbook %s  -i ansible/inventory ansible/playbooks/prep.yml  -e @ansible/defaults/main.yml --flush-cache; \
+         ansible-playbook %s -i ansible/inventory ansible/tasks/cloud_init.yml  --flush-cache; \
+         ansible-playbook %s  -i ansible/inventory ansible/playbooks/prep.yml  -e @ansible/defaults/main.yml %s --flush-cache; \
          terraform init ; terraform get ; terraform apply -auto-approve; \
          cd ../ocp4;  terraform init ; terraform get ; terraform apply -auto-approve; \
-         cd ../prep; sudo openshift-install --dir %s wait-for bootstrap-complete; \
-         echo "Waiting 5 mins"; sleep 300; \
-         oc --config %s/auth/kubeconfig patch configs.imageregistry.operator.openshift.io cluster --type merge --patch \'{"spec":{"storage":{"emptydir":{}}}}\'; \
+         cd ../prep; sudo ./ansible/bin/openshift-install --dir %s wait-for bootstrap-complete; \
+         echo "Waiting 20 secs"; sleep 20; \
          ansible-playbook %s -i ansible/inventory ansible/tasks/lb_rm_bootstrap.yml ; \
-         sudo openshift-install --dir %s/ wait-for install-complete'
+         sudo ./ansible/bin/openshift-install --dir %s/ wait-for install-complete'
          
 
-                % (verbosity, verbosity, verbosity, clusterName, clusterName, verbosity, clusterName)
+                % (verbosity, disconnected, verbosity, disconnected, verbosity, verbosity, disconnected, clusterName, clusterName,clusterName, verbosity, clusterName)
        )
 
     if cmd == 'post':
         status = os.system(
         'cd ./prep; \
-         oc --config %s/auth/kubeconfig patch configs.imageregistry.operator.openshift.io cluster --type merge --patch \'{"spec":{"storage":{"emptydir":{}}}}\'; \
          ansible-playbook %s -i ansible/inventory ansible/tasks/lb_rm_bootstrap.yml ; \
-         sudo openshift-install --dir %s/ wait-for install-complete'
+         sudo ./ansible/bin/openshift-install --dir %s wait-for install-complete'
 
-                % (clusterName, verbosity, clusterName)
+                % (verbosity, clusterName)
        )
 
 
@@ -121,8 +130,9 @@ def launch(cmd=None,
           status = os.system(
            'ansible-playbook %s  -i config prep/ansible/tasks/generate_config_files.yml --flush-cache; \
             cd prep;  \
-            ansible-playbook -i ansible/inventory ansible/tasks/ocp_vm_config.yml  %s -e @ansible/defaults/main.yml'
-                   % (verbosity, verbosity )
+            ansible-playbook -i ansible/inventory ansible/tasks/ocp_vm_config.yml  %s -e @ansible/defaults/main.yml %s'
+                   % (verbosity, verbosity, disconnected )
+
            )
        if type == 'ocp_module':
           status = os.system(
@@ -131,13 +141,32 @@ def launch(cmd=None,
                    % (verbosity, verbosity )
            )
 
+    if cmd == 'quay':
+       if operate == 'apply':
+         status = os.system(
+         'cd prep; \
+         ansible-playbook %s -i ../config ansible/tasks/quay.yml --flush-cache'
+                  % (verbosity)
+         )
+       if operate == 'dtr':
+          status = os.system(
+         'cd prep; \
+         ansible-playbook %s -i ../config ansible/tasks/quay.yml --flush-cache'
+                  % (verbosity)
+         )
+
     if cmd == 'clean':
-       status = os.system(
-        'cd ocp4 ; terraform destroy -auto-approve ; \
+      # status = os.system(
+      # 'cd prep; ansible-playbook %s  -i ansible/inventory  ansible/tasks/test.yaml %s %s --flush-cache'
+      #          % (verbosity, cleanAll, disconnected)
+      # )
+      
+      status = os.system(
+      'cd ocp4 ; terraform destroy -auto-approve ; \
          cd ../prep ; terraform destroy -auto-approve ; \
-         ansible-playbook %s -i ../config ansible/tasks/clean.yml --flush-cache'
-                % (verbosity)
-       )
+         ansible-playbook %s -i ../config ansible/tasks/clean.yml %s %s --flush-cache'
+               % (verbosity, cleanAll, disconnected)
+      )
 
 
 

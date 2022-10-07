@@ -8,24 +8,49 @@
     op: install
 
   tasks:
-    - name: Create DNSMasq config 
+    # - name: Create DNSMasq config 
+    #   template:
+    #     src: "../templates/dnsmasq_config.j2"
+    #     dest: "/etc/NetworkManager/dnsmasq.d/{{ cluster_name }}_dns.conf"
+    #   when: op != 'destroy'
+    #     #dest: "/var/lib/libvirt/dnsmasq/{{ cluster_name }}_dns.conf"
+
+    # - name: Remove DSNMasq config
+    #   file:
+    #     path: "/etc/NetworkManager/dnsmasq.d/{{ cluster_name }}_dns.conf"
+    #     state: absent
+    #   when: op == 'destroy'
+
+    # - name: Update NetworkManager (enable DNS changes)
+    #   service:
+    #     name: NetworkManager
+    #     state: reloaded                               # restarted may be required. 
+    #   become: true
+    - name: Create DNSMasq config for upi
       template:
         src: "../templates/dnsmasq_config.j2"
-        dest: "/etc/NetworkManager/dnsmasq.d/{{ cluster_name }}_dns.conf"
-      when: op != 'destroy'
-        #dest: "/var/lib/libvirt/dnsmasq/{{ cluster_name }}_dns.conf"
+        dest: "/etc/dnsmasq.d/{{ cluster_name }}_dns.conf"
+  
+    - name: Update DNSMasq config
+      lineinfile:
+        path: /etc/dnsmasq.conf
+        line: "listen-address={{dummy_network_ip}}"
+        create: yes
+       
+    - name: Add nameserver 
+      lineinfile:
+        path: /etc/resolv.conf
+        line: "nameserver {{dummy_network_ip}}"
+        insertbefore: "nameserver"
+        backup: true
 
-    - name: Remove DSNMasq config
-      file:
-        path: "/etc/NetworkManager/dnsmasq.d/{{ cluster_name }}_dns.conf"
-        state: absent
-      when: op == 'destroy'
-
-    - name: Update NetworkManager (enable DNS changes)
+    - name: Restart dnamasq (enable DNS changes)
       service:
-        name: NetworkManager
-        state: reloaded                               # restarted may be required. 
+        name: dnsmasq
+        state: restarted                               # restarted may be required. 
       become: true
+
+      
 
       
 

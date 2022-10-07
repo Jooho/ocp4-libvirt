@@ -1,8 +1,8 @@
-bin/*
+prep/ansible/bin/*
 *.log
 *hcl
 .terraform/
-inventory
+inventory*
 matchbox-main
 upi/
 connection.tf
@@ -14,3 +14,7 @@ terraform.tfvars
 user-data
 bootp.xsl
 ocp_module.tf
+pause.tar
+postgres.tar
+quay.tar
+redis.tar

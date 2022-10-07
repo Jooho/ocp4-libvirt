@@ -1,6 +1,6 @@
 
 ## OpenShift UPI Demo script
-## Manual way
+## Manual way - just for Reference
 
 Config KVM (optional)
 ```
@@ -81,18 +81,19 @@ openshift-install --dir upi/ wait-for install-complete'
 
 ## jkit commands
 
+*Normal Installation with Internet*
 ```
 ./jkit.py init
 ```
 
 **2. Prep**
 ```
-./jkit.py prep -op [apply,dtr]  # dtr = destory
+./jkit.py prep
 ```
 
 **3. OCP**
 ```
-./jkit.py ocp -op [apply,dtr]   # dtr = destory
+./jkit.py ocp 
 ```
 **4. Post**
 ```
@@ -103,3 +104,12 @@ openshift-install --dir upi/ wait-for install-complete'
 ```
 ./jkit.py oneshot
 ```
+*Disconnected Installation without Internet*
+
+~~~
+./jkit.py init -v
+./jkit.py quay -v
+./jkit.py init --type disconnect -v
+./jkit.py prep --type disconnect -v
+./jkit.py ocp  -v
+~~~

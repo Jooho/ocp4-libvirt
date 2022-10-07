@@ -7,10 +7,10 @@ resource "libvirt_network" "ocp_network" {
  
    bridge = "${var.network_bridge}"
  
-   dns = [{
+   dns {
      enabled = true
      local_only = false
-   }]
+   }
 #   provisioner "local-exec" {
 #       command = <<EOF
 #          ansible-playbook -i ./ansible/inventory ./ansible/tasks/matchbox_config.yml -e @ansible/defaults/main.yml
@@ -27,7 +27,7 @@ resource "libvirt_network" "ocp_network" {
    }
 
 
-  depends_on = [ "module.matchbox" ]
+  depends_on = [ module.matchbox ]
 }
 
 #  dns = {

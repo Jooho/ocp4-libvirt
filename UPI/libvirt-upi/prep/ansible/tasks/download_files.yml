@@ -25,27 +25,30 @@
        src: "{{ rhcos_initramfs_src }}"
        dest: "/var/lib/matchbox/{{ rhcos_initramfs_path }}"
 
-   - rhcos_bios:
-       src: "{{ rhcos_bios_src }}"
-       dest: "{{ webserver_doc_path }}/rhcos-bios.raw.gz"
-
+   - rhcos_rootfs:
+       src: "{{ rhcos_rootfs_src }}"
+       dest: "{{ webserver_doc_path }}/rhcos-rootfs.img"
+   
    - openshift_installer:
        src: "{{ openshift_installer_src }}"
-       dest: "/usr/bin"
+       dest: "../../bin"
 
    - matchbox_git_repo:
        src: "https://github.com/poseidon/matchbox/archive/master.zip"
        dest: "{{ lookup('env','PWD') }}"
 
   pre_tasks:
-    - debug: var=rhcos_initramfs
+    - set_fact:
+        libvirt_dir: "{{ terraform_provider_libvirt.src  |  urlsplit('path') }}"
+        matchbox_dir: "{{ terraform_provider_matchbox.src  |  urlsplit('path') }}"
     - name: Create directories
       file: 
         path: "{{ item }}"
         state: directory
       with_items:
       - "{{ terraform_binary.dest | dirname }}"
-      - "{{ terraform_provider_libvirt.dest | dirname }}"
+      - "{{ terraform_provider_libvirt.dest | dirname }}/registry.terraform.io/hashicorp/libvirt/{{ libvirt_dir|regex_search('[0-9].[0-9].[0-9]+') }}/linux_amd64"
+      - "{{ terraform_provider_matchbox.dest | dirname }}/registry.terraform.io/hashicorp/matchbox/{{ matchbox_dir|regex_search('[0-9].[0-9].[0-9]+') }}/linux_amd64"
       - "{{ rhcos_kernel.dest | dirname }}"
       - "{{ webserver_doc_path }}"
 
@@ -60,23 +63,45 @@
       - "{{ terraform_binary }}"
       - "{{ terraform_provider_libvirt }}"
       - "{{ terraform_provider_matchbox }}"
-      - "{{ openshift_installer }}"
       - "{{ matchbox_git_repo }}"
 
-    - set_fact:
-        matchbox_dir: "{{ terraform_provider_matchbox.src  |  urlsplit('path') }}"
+    - name: Download openshift-install if it is not for disconnected installation
+      unarchive:
+        src: "{{ item.src }}" 
+        dest: "{{ item.dest }}"
+        mode: '0777'
+        remote_src: yes
+      with_items:
+      - "{{ openshift_installer }}"
+      when: disconnected is not defined
 
-    - name: Check if matachbox provider exist    
-      stat:
-        path: "{{ terraform_provider_matchbox.dest }}/terraform-provider-matchbox"
-      register: matchbox_provider_exist
+    # - name: Check if libvirt provider exist    
+    #   stat:
+    #     path: "{{ terraform_provider_libvirt.dest }}/registry.terraform.io/hashicorp/libvirt"
+    #   register: libvirt_provider_exist
+
+    - name: Move libvirt provider
+      copy:
+        src: "{{ terraform_provider_libvirt.dest }}/terraform-provider-libvirt_{{ libvirt_dir|regex_search('v[0-9].[0-9].[0-9]+') }}"
+        dest: "{{ terraform_provider_libvirt.dest | dirname }}/registry.terraform.io/hashicorp/libvirt/{{ libvirt_dir|regex_search('[0-9].[0-9].[0-9]+') }}/linux_amd64/terraform-provider-libvirt_{{ libvirt_dir|regex_search('v[0-9].[0-9].[0-9]+') }}"
+        mode: '0777'
+
+    - name: Remove libvirt file
+      file:
+        path: "{{ terraform_provider_libvirt.dest }}/terraform-provider-libvirt_{{ libvirt_dir|regex_search('v[0-9].[0-9].[0-9]+') }}"
+        state: absent
+
+    # - name: Check if matachbox provider exist    
+    #   stat:
+    #     path: "{{ terraform_provider_matchbox.dest }}/registry.terraform.io/hashicorp/matchbox"
+    #   register: matchbox_provider_exist
 
     - name: Move matchbox provider
       copy:
         src: "{{ terraform_provider_matchbox.dest }}/terraform-provider-matchbox_{{ matchbox_dir|regex_search('v[0-9].[0-9].[0-9]+') }}"
-        dest: "{{ terraform_provider_matchbox.dest }}/terraform-provider-matchbox"
+        dest: "{{ terraform_provider_matchbox.dest | dirname }}/registry.terraform.io/hashicorp/matchbox/{{ matchbox_dir|regex_search('[0-9].[0-9].[0-9]+') }}/linux_amd64//terraform-provider-matchbox_{{ matchbox_dir|regex_search('v[0-9].[0-9].[0-9]+') }}"
         mode: '0777'
-      when: matchbox_provider_exist.stat.exists == False
+      # when: matchbox_provider_exist.stat.exists == False
 
     - name: Remove matchbox file
       file:
@@ -90,5 +115,5 @@
       with_items:
       - "{{ rhcos_kernel }}"
       - "{{ rhcos_initramfs }}"
-      - "{{ rhcos_bios }}"
+      - "{{ rhcos_rootfs }}"
 

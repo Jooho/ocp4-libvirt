@@ -3,21 +3,29 @@
   become: yes
   become_user: root
   gather_facts: no
+  
+  vars:
+    quay_root_ca_content: "{{ lookup('file', quay_root_ca ) }}"
 
   pre_tasks:
     - name: Create OCP4 cluster dicrectory
       file:
-        path: "../../{{cluster_name}}"
+        path: "../../{{cluster_name}}/"
         state: directory
 
   tasks:
+    # - name: Build openshift-install for disconnected installation
+    #   shell: "oc adm release extract -a {{pull_secret_json_path}} --command=openshift-install --to ../../../bin {{quay_local_registry}}/{{quay_local_repository}}:{{quay_ocp_release}}-{{quay_architecture}}"
+    #   when: disconnected is defined
+
+
     - name: Create OCP4 install-config
       template:
         src: ../templates/ocp4_install_config.yml.j2
         dest: "../../{{cluster_name}}/install-config.yaml"
 
     - name: Create Ignition for master/worker/bootstrap
-      command: "openshift-install create ignition-configs --dir ../../{{ cluster_name }}"
+      command: "../bin/openshift-install create ignition-configs --dir ../../{{ cluster_name }}"
 
 #    - name: Gather files cluster folder
 #      find:
@@ -34,7 +42,6 @@
 #      - "{{ file_list.files }}" 
 #      become: yes
 
-
     - name: Change permission of ignition files
       file:
         path: "../../{{ cluster_name }}"
@@ -47,6 +54,7 @@
       copy:
         src: "../../{{ cluster_name }}/{{ item }}"
         dest: "{{ webserver_doc_path }}/{{ item }}"
+        force: true
       with_items:
       - bootstrap.ign
       - master.ign
@@ -66,4 +74,14 @@
         state: restarted
       become: true
 
+    - name: Create custom update shell script
+      template:
+        src: ../templates/custom-update.sh.j2
+        dest: "../../{{cluster_name}}/custom-update.sh"
+        mode: 0777    
+  
+    - name: Executing custom update for libvirt env
+      ansible.builtin.shell: cd ../../{{cluster_name}}; ./custom-update.sh
+      async: 6000
+      poll: 0
 

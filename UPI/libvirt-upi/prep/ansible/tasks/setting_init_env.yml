@@ -1,0 +1,21 @@
+- name: Setting initial environment like network
+  hosts: localhost
+  gather_facts: no
+  become: yes
+  become_user: root
+
+  tasks:
+  - name: Check if dummy network exists
+    shell: "ip a|grep {{dummy_network_interface}} |grep {{dummy_network_ip}}|wc -l"
+    register: dummy_network_status
+
+  - name: Add a dummy network interface
+    shell: "{{ item }}"
+    with_items:
+    - "modprobe dummy"
+    - "ip link add {{dummy_network_interface}} type dummy"
+    - "ip link show {{dummy_network_interface}}"
+    - "ifconfig {{dummy_network_interface}} hw ether C8:D7:4A:4E:47:50"
+    - "ip addr add {{dummy_network_ip}}/24 brd + dev {{dummy_network_interface}} label {{dummy_network_interface}}:0"
+    - "ip link set dev {{dummy_network_interface}} up"
+    when: dummy_network_status.stdout != '1'

@@ -3,26 +3,43 @@
 # OCP 
 cluster_name="upi"
 ocp_version="4.11"
-worker_nodes=1
-master_nodes=1
+worker_nodes=2
+master_nodes=2
+
+# Dummy network
+dummy_network_ip=192.168.1.100
+dummy_network_interface=eth0
+dummy_network_hw=C8:D7:4A:4E:47:50
 
 # pull_secret_path="/home/jooho/Downloads/pull-secret"
-pull_secret_path="/home/jooho/temp/disconnected_install/pull_secret"
+pull_secret_path="/home/jooho/Downloads/pull-secret.txt"
+pull_secret_json_path="/home/jooho/Downloads/pull-secret.json"
 ssh_public_key_path="/home/jooho/.ssh/id_rsa.pub"
 
+#rhcos_install_dev=/dev/vda
+
+# Disconnected Installation
 rhcos_kernel_path=assets/rhcos/{{ ocp_version }}/rhcos-kernel
 rhcos_initramfs_path=assets/rhcos/{{ ocp_version }}/rhcos-initramfs.img
-rhcos_os_image_url=192.168.222.1:9000/rhcos-bios.raw.gz
+rhcos_rootfs_path=http://{{ dummy_network_ip }}:9000/rhcos-rootfs.img
 
-#rhcos_install_dev=vda
-
+# Quay
+quay_id=init
+quay_pw=Redhat_0123456
+quay_root_ca=/etc/quay-install/quay-rootCA/rootCA.pem 
+quay_ocp_release=4.11.7
+quay_architecture=x86_64
+quay_local_registry=local-quay.example.com:8443
+quay_local_repository=ocp4/openshift4
+quay_product_repo=openshift-release-dev
+quay_release_name=ocp-release
 
 
 
 ##################################### Optional ######################################
 ## Comment-out value is default. If you delete any values from here, the default value of terraform values will be used .
 # KVM network
-#uri='qemu:///system'
+uri='qemu:///system?socket=/var/run/libvirt/virtqemud-sock'
 #network_cidr="192.168.222.0/24"
 #network_domain="example.com"
 
@@ -43,33 +60,34 @@ lb_vm_volume_source="https://cloud.centos.org/centos/8/x86_64/images/CentOS-8-Ge
 
 # bootstrap 
 #bootstrap_vm_size="50" #G
-bootstrap_vm_memory="8192"
+bootstrap_vm_memory="6144"
 bootstrap_vm_vcpu="4"
 
 # master
-master_vm_size="80" #G
-master_vm_memory="10096"
-master_vm_vcpu="4"
+master_vm_size="120" #G
+master_vm_memory="10240"
+master_vm_vcpu="6"
 
 # worker
-worker_vm_size="80" #G
-worker_vm_memory="8096"
-worker_vm_vcpu="4"
+worker_vm_size="100" #G
+worker_vm_memory="10240"
+worker_vm_vcpu="6"
 
-#matchbox_rpc_endpoint="matchbox.example.com:8081"
-#matchbox_http_endpoint="matchbox.example.com:8080"
-#matchbox_client_cert="~/.matchbox/client.crt"
-#matchbox_client_key="~/.matchbox/client.key
-#matchbox_trusted_ca_cert="~/.matchbox/ca.crt"
+matchbox_rpc_endpoint="matchbox.example.com:8081"
+matchbox_http_endpoint="http://matchbox.example.com:8080"
+matchbox_client_cert="~/.matchbox/client.crt"
+matchbox_client_key="~/.matchbox/client.key"
+matchbox_trusted_ca_cert="~/.matchbox/ca.crt"
 
 # OCP 4.2
 # rhcos
 rhcos_kernel_src="https://rhcos.mirror.openshift.com/art/storage/releases/rhcos-4.11/411.86.202208112011-0/x86_64/rhcos-411.86.202208112011-0-live-kernel-x86_64"
 rhcos_initramfs_src="https://rhcos.mirror.openshift.com/art/storage/releases/rhcos-4.11/411.86.202208112011-0/x86_64/rhcos-411.86.202208112011-0-live-initramfs.x86_64.img"
-rhcos_bios_src="https://rhcos.mirror.openshift.com/art/storage/releases/rhcos-4.11/411.86.202208112011-0/x86_64/rhcos-411.86.202208112011-0-live-rootfs.x86_64.img"
+rhcos_rootfs_src="https://rhcos.mirror.openshift.com/art/storage/releases/rhcos-4.11/411.86.202208112011-0/x86_64/rhcos-411.86.202208112011-0-live-rootfs.x86_64.img"
 
 # openshift installer
 openshift_installer_src="https://mirror.openshift.com/pub/openshift-v4/clients/ocp/4.11.7/openshift-install-linux.tar.gz"
 
-
+# mirror registry
+mirror_registry_src="https://developers.redhat.com/content-gateway/rest/mirror/pub/openshift-v4/clients/mirror-registry/latest/mirror-registry.tar.gz"
 

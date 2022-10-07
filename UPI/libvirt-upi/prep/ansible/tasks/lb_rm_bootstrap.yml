@@ -32,4 +32,14 @@
         enabled: yes
         state: restarted
 
-
+- name: Destroy bootstrap vm
+  hosts: hypervisor
+  tasks:
+    - name: Delete bootstrap vm
+      virt:
+        name: "bootstrap"
+        command: "{{ item }}"
+      with_items:
+      - "undefine"
+      - "destroy"
+      become: true

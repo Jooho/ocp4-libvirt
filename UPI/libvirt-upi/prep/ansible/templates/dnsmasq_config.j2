@@ -20,7 +20,9 @@ address=/api.{{ cluster_name }}.{{ network_domain }}/{{ ip_prefix[0] }}.{{ ip_pr
 address=/api-int.{{ cluster_name }}.{{ network_domain }}/{{ ip_prefix[0] }}.{{ ip_prefix[1] }}.{{ ip_prefix[2] }}.2
 address=/.apps.{{ cluster_name }}.{{ network_domain }}/{{ ip_prefix[0] }}.{{ ip_prefix[1] }}.{{ ip_prefix[2] }}.2
 
-address=/matchbox.{{ network_domain }}/{{ ansible_default_ipv4.address }}
+
+address=/local-quay.{{ network_domain }}/192.168.1.100
+address=/matchbox.{{ network_domain }}/192.168.1.100
 #address=/matchbox.{{ network_domain }}/{{ ip_prefix[0] }}.{{ ip_prefix[1] }}.{{ ip_prefix[2] }}.1
 address=/bootstrap.{{ cluster_name }}.{{ network_domain }}/{{ ip_prefix[0] }}.{{ ip_prefix[1] }}.{{ ip_prefix[2] }}.253
 

@@ -11,8 +11,8 @@ variable "matchbox_client_key" {}
 variable "matchbox_trusted_ca_cert" {}
 
 variable "rhcos_install_dev" {} 
-variable "rhcos_os_image_url" {}
 variable "rhcos_kernel_path" {}
+variable "rhcos_rootfs_path" {}
 variable "rhcos_initramfs_path"{}
 
 variable "bootstrap_ign_path" {}
@@ -22,22 +22,22 @@ variable "bootstrap_domains" {}
 
 variable "master_ign_path" {}
 variable "master_names" {
-   type="list"
+   type=list(string)
 }
 variable "master_macs" {
-   type="list"
+   type=list(string)
 }
 variable "master_domains" {
-   type="list"
+   type=list(string)
 }
 
 variable "worker_ign_path" {}
 variable "worker_names" {
-   type="list"
+   type=list(string)
 }
 variable "worker_macs"{
-   type="list"
+   type=list(string)
 }
 variable "worker_domains" {
-   type="list"
+   type=list(string)
 }

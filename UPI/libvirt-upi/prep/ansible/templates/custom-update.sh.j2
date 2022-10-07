@@ -1,0 +1,53 @@
+#!/bin/bash
+
+function oc::wait::object::availability() {
+    local cmd=$1 # Command whose output we require
+    local interval=$2 # How many seconds to sleep between tries
+    local iterations=$3 # How many times we attempt to run the command
+
+    ii=0
+
+    while [ $ii -le $iterations ]
+    do
+
+        token=$($cmd &>>/dev/null) && returncode=$? || returncode=$?
+        echo "$cmd ${only_log_file_options}"|sh
+
+        if [ $returncode -eq 0 ]; then
+            break
+        fi
+
+        ((ii=ii+1))
+        if [ $ii -eq 100 ]; then
+            log::str::print "${error}${cmd} did not return a value${clear}"
+            exit 1
+        fi
+        sleep $interval
+    done
+}
+
+
+export KUBECONFIG=./prep/${cluster_name}/auth/kubeconfig
+export readyNodeCount=$(oc get node  --no-headers|grep Ready|wc -l)
+
+echo "Checking if all nodes are Ready"
+while [[ ${readyNodeCount} != '{{worker_nodes + master_nodes}}' ]] 
+do 
+  echo "Nodes are not created fully so retry to approve csr"
+  oc --kubeconfig ${KUBECONFIG} get csr -o json | jq -r '.items[] | .metadata.name' | xargs oc --kubeconfig ${KUBECONFIG} adm certificate approve
+  sleep 60
+  readyNodeCount=$(oc get node  --no-headers|grep  Ready|wc -l)
+done 
+
+echo "Checking if image registry config exist"
+oc::wait::object::availability "oc get configs.imageregistry.operator.openshift.io cluster" 2 60
+oc patch configs.imageregistry.operator.openshift.io cluster --type merge --patch '{"spec":{"managementState":"Managed"}}'
+sleep 2
+oc patch configs.imageregistry.operator.openshift.io cluster --type merge --patch '{"spec":{"storage":{"emptyDir":{}}}}'
+
+echo "Checking if scheduler exist"
+oc::wait::object::availability "oc get scheduler cluster" 2 60
+oc patch scheduler cluster --patch '{"spec": {"mastersSchedulable":true}}' --type=merge 
+
+echo "Disable OperatorHub"
+oc patch OperatorHub cluster --type json -p '[{"op": "add", "path": "/spec/disableAllDefaultSources", "value": true}]'

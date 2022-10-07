@@ -69,6 +69,9 @@ listen ingress-http
 {% for worker in range(worker_nodes) %}
     server worker-{{ loop.index - 1 }} worker-{{ loop.index - 1 }}.{{ cluster_name }}.{{ network_domain }}:80 check
 {% endfor %}
+{% for master in range(master_nodes) %}
+    server master-{{ loop.index - 1 }} master-{{ loop.index - 1 }}.{{ cluster_name }}.{{ network_domain }}:80 check
+{% endfor %}
  
 listen ingress-https
     bind *:443
@@ -77,6 +80,9 @@ listen ingress-https
     option tcp-check
 {% for worker in range(worker_nodes) %}
     server worker-{{ loop.index - 1 }} worker-{{ loop.index - 1 }}.{{ cluster_name }}.{{ network_domain }}:443 check
+{% endfor %}
+{% for master in range(master_nodes) %}
+    server master-{{ loop.index - 1 }} master-{{ loop.index - 1 }}.{{ cluster_name }}.{{ network_domain }}:443 check
 {% endfor %}
  
 listen api
@@ -99,4 +105,11 @@ listen machine-config-server
     server master-{{ loop.index - 1 }} master-{{ loop.index - 1 }}.{{ cluster_name }}.{{ network_domain }}:22623 check
 {% endfor %}
 
-
+listen stats
+    bind :9999
+    mode http
+    stats enable
+    stats hide-version
+    stats refresh 10s
+    stats show-node
+    stats uri /

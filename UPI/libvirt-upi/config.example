@@ -11,9 +11,9 @@ ssh_public_key_path="/home/jooho/.ssh/id_rsa.pub"
 
 rhcos_kernel_path=/var/lib/matchbox/assets/rhcos/4.1/rhcos-kernel
 rhcos_initramfs_path=/var/lib/matchbox/assets/rhcos/4.1/rhcos-initramfs.img
-rhcos_os_image_url=192.168.222.1:8000/rhcos-bios.raw.gz
-
-#rhcos_install_dev=vda
+//rhcos_rootfs_path=/var/lib/matchbox/assets/rhcos/4.1/rhcos-rootfs.img
+rhcos_rootfs_path=192.168.222.1:9000/rhcos-bios.raw.gz
+#rhcos_install_dev=/dev/vda
 
 
 

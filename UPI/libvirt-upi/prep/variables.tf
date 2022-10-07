@@ -57,12 +57,13 @@ variable "lb_vm_volume_source" {
 ### Matchbox
 variable "rhcos_install_dev" {}
 variable "ssh_public_key" {}
+
 variable "matchbox_rpc_endpoint" {
     default="matchbox.example.com:8081"
 }
 
 variable "matchbox_http_endpoint" {
-    default="matchbox.example.com:8080"
+    default="http://matchbox.example.com:8080"
 }
 
 variable "matchbox_client_cert" {
@@ -84,7 +85,7 @@ variable "rhcos_kernel_path" {
 variable "rhcos_initramfs_path" {
 }
 
-variable "rhcos_os_image_url"{
+variable "rhcos_rootfs_path"{
 }
 
 variable "webserver_doc_path" {

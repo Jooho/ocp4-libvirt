@@ -1,22 +1,34 @@
 apiVersion: v1
 baseDomain: {{ network_domain }}
 compute:
-- name: worker
+- hyperthreading: Enabled
+  name: worker
   replicas: {{ worker_nodes }}
 controlPlane:
+  hyperthreading: Enabled
   name: master
   replicas: {{ master_nodes }}
 metadata:
   name: {{ cluster_name }}
 networking:
-  clusterNetworks:
+  clusterNetwork:
   - cidr: 10.128.0.0/14
     hostPrefix: 23
-networkType: OpenShiftSDN
-serviceNetwork:
-- 172.30.0.0/16
+  networkType: OpenShiftSDN
+  serviceNetwork:
+  - 172.30.0.0/16
 platform:
   none: {}
 pullSecret: '{{ pull_secret }}'
 sshKey: '{{ ssh_public_key }}'
-
+{% if disconnected is defined %}
+additionalTrustBundle: | 
+  {{quay_root_ca_content  | replace("\n", "\n  ")}}
+imageContentSources: 
+  - mirrors:
+    - {{quay_local_registry}}/{{quay_local_repository}}
+    source: quay.io/openshift-release-dev/ocp-v4.0-art-dev
+  - mirrors:
+    - {{quay_local_registry}}/{{quay_local_repository}}
+    source: quay.io/openshift-release-dev/ocp-release
+{% endif %}

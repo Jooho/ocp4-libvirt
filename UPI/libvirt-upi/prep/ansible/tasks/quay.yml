@@ -1,0 +1,81 @@
+- name: Deploy Quay and mirror images
+  hosts: localhost
+  become: yes
+  become_user: root
+  gather_facts: no
+  vars:
+  - mirror_registry:
+      src: "{{ mirror_registry_src }}"
+      dest: "../bin"
+
+  pre_tasks: 
+  - name: start sshd service
+    service:
+      name: sshd 
+      state: started
+
+  - name: Delete /tmp/pull-secret
+    file: 
+       path: /tmp/{{pull_secret_path|basename}}
+       state: absent         
+
+  - name: Copy pull secert 
+    shell: "cp {{pull_secret_path}} /tmp/."
+    
+  - name: Check if mirror_registry exist
+    stat:
+      path: ../bin/mirror-registry
+    register: mirror_registry_cli
+      
+  - name: Download Mirror Registry CLI
+    unarchive:
+      src: "{{ item.src }}"
+      dest: "{{ item.dest }}"
+      mode: '0777'
+      remote_src: yes
+    with_items:
+    - "{{ mirror_registry }}"
+    when: not mirror_registry_cli.stat.exists    
+
+  tasks:
+  - name: Check if dummy network exists
+    shell: "ip a|grep {{dummy_network_interface}} |grep {{dummy_network_ip}}|wc -l"
+    register: dummy_network_status
+
+  - name: Add a dummy network interface
+    shell: "{{ item }}"
+    with_items:
+    - "modprobe dummy"
+    - "ip link add {{dummy_network_interface}} type dummy"
+    - "ip link show {{dummy_network_interface}}"
+    - "ifconfig {{dummy_network_interface}} hw ether C8:D7:4A:4E:47:50"
+    - "ip addr add {{dummy_network_ip}}/24 brd + dev {{dummy_network_interface}} label {{dummy_network_interface}}:0"
+    - "ip link set dev {{dummy_network_interface}} up"
+    when: dummy_network_status.stdout != '1'
+
+  - name: Check if quay registry is running
+    shell: "podman ps |grep quay-app|wc -l"
+    register: quay_registry_status
+
+  - block:
+    - name: Deploy quay registry
+      shell: "../bin/mirror-registry install  --quayHostname {{quay_local_registry | regex_replace(':8443') }}   --initPassword {{quay_pw}}  --initUser {{quay_id}} "
+
+    - name: Update Root CA
+      shell: "{{ item }}"
+      with_items:
+      - "cp /etc/quay-install/quay-rootCA/rootCA.pem   /etc/pki/ca-trust/source/anchors/"
+      - "update-ca-trust extract"
+
+    - name: Login to local quay
+      shell: "podman login --authfile /tmp/{{pull_secret_path|basename}}  -u {{quay_id}} -p {{quay_pw}}  {{quay_local_registry}} "
+
+    - name: Mirror images
+      shell: "oc adm release mirror -a /tmp/{{pull_secret_path|basename}} --from=quay.io/{{ quay_product_repo }}/{{ quay_release_name }}:{{ quay_ocp_release }}-{{ quay_architecture }} --to={{ quay_local_registry }}/{{ quay_local_repository }} --to-release-image={{ quay_local_registry }}/{{ quay_local_repository }}:{{ quay_ocp_release }}-{{ quay_architecture }} --skip-verification=true"
+    when: quay_registry_status.stdout != '1'
+
+  - name: Add nameserver 
+    lineinfile:
+      path: /etc/resolv.conf
+      line: "nameserver {{dummy_network_ip}}"
+      insertbefore: "nameserver"
