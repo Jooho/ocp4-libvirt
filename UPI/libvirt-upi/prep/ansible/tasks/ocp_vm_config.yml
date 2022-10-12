@@ -80,8 +80,14 @@
         dest: "../../{{cluster_name}}/custom-update.sh"
         mode: 0777    
   
-    - name: Executing custom update for libvirt env
-      ansible.builtin.shell: cd ../../{{cluster_name}}; ./custom-update.sh
-      async: 6000
-      poll: 0
+    - name: Copy clean memory script to /template
+      copy: 
+        src: ../files/clean_memory.sh
+        dest: /tmp/clean_memory.sh
+        mode: 0777
+
+    # - name: Executing custom update for libvirt env
+    #   ansible.builtin.shell: cd ../../{{cluster_name}}; ./custom-update.sh
+    #   async: 6000
+    #   poll: 0
 

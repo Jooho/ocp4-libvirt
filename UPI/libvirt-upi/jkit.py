@@ -9,7 +9,7 @@ from io import StringIO
 @click.command()
 @click.argument('cmd',
               default='init',
-              type=click.Choice(['init', 'prep', 'ocp', 'quay','update', 'clean', 'oneshot' , 'post']))
+              type=click.Choice(['init', 'prep', 'ocp', 'quay','update', 'clean', 'oneshot' , 'post','dns']))
 @click.option('-t','--type',
               default='inventory',
               type=click.Choice(['inventory', 'ocp', 'all', 'conf','disconnect']))
@@ -79,7 +79,8 @@ def launch(cmd=None,
             terraform init ; \
             terraform get ; \
             terraform apply -auto-approve ;\
-            cd ../prep; sudo ./ansible/bin/openshift-install --dir %s wait-for bootstrap-complete; cd ../'
+            cd ../prep; ./upi/custom-update.sh; \
+            sudo ./ansible/bin/openshift-install --dir %s wait-for bootstrap-complete; cd ../'
              
                 % (clusterName)
           )
@@ -93,7 +94,7 @@ def launch(cmd=None,
 
     if cmd == 'oneshot':
        status = os.system(
-        'ansible-playbook %s  -i config prep/ansible/tasks/setting_init_env.yml %s --flush-cache; \
+        'ansible-playbook %s  %s -i config prep/ansible/tasks/setting_init_env.yml  --flush-cache; \
          ansible-playbook %s %s -i config prep/ansible/tasks/generate_config_files.yml --flush-cache; \
          cd prep;  \
          ansible-playbook %s -i ansible/inventory ansible/tasks/cloud_init.yml  --flush-cache; \
@@ -106,7 +107,7 @@ def launch(cmd=None,
          sudo ./ansible/bin/openshift-install --dir %s/ wait-for install-complete'
          
 
-                % (verbosity, disconnected, verbosity, disconnected, verbosity, verbosity, disconnected, clusterName, clusterName,clusterName, verbosity, clusterName)
+                % (verbosity, disconnected, verbosity, disconnected, verbosity, verbosity, disconnected, clusterName, verbosity, clusterName)
        )
 
     if cmd == 'post':
@@ -148,12 +149,7 @@ def launch(cmd=None,
          ansible-playbook %s -i ../config ansible/tasks/quay.yml --flush-cache'
                   % (verbosity)
          )
-       if operate == 'dtr':
-          status = os.system(
-         'cd prep; \
-         ansible-playbook %s -i ../config ansible/tasks/quay.yml --flush-cache'
-                  % (verbosity)
-         )
+
 
     if cmd == 'clean':
       # status = os.system(
@@ -167,7 +163,19 @@ def launch(cmd=None,
          ansible-playbook %s -i ../config ansible/tasks/clean.yml %s %s --flush-cache'
                % (verbosity, cleanAll, disconnected)
       )
-
+    if cmd == 'dns':
+       if operate == 'apply':
+         status = os.system(
+         'cd prep; \
+         ansible-playbook %s -i ansible/inventory ansible/tasks/dns_config.yml --flush-cache'
+                  % (verbosity)
+         )
+       if operate == 'dtr':
+          status = os.system(
+         'cd prep; \
+         ansible-playbook %s -i ansible/inventory ansible/tasks/dns_config.yml -e op=destory --flush-cache'
+                  % (verbosity)
+         )
 
 
 

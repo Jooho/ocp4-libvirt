@@ -1,4 +1,6 @@
 prep/ansible/bin/*
+oc-mirror-workspace
+
 *.log
 *hcl
 .terraform/
@@ -18,3 +20,4 @@ pause.tar
 postgres.tar
 quay.tar
 redis.tar
+*.backup

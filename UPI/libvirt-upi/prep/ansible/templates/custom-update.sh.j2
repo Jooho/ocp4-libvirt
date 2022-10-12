@@ -26,9 +26,12 @@ function oc::wait::object::availability() {
     done
 }
 
+sudo /tmp/clean_memory.sh &
+cleanMemoryScriptPID=$!
+
 
 export KUBECONFIG=./prep/${cluster_name}/auth/kubeconfig
-export readyNodeCount=$(oc get node  --no-headers|grep Ready|wc -l)
+export readyNodeCount=$(oc get node  --no-headers|grep Ready |grep -v NotReady|wc -l)
 
 echo "Checking if all nodes are Ready"
 while [[ ${readyNodeCount} != '{{worker_nodes + master_nodes}}' ]] 
@@ -36,7 +39,7 @@ do
   echo "Nodes are not created fully so retry to approve csr"
   oc --kubeconfig ${KUBECONFIG} get csr -o json | jq -r '.items[] | .metadata.name' | xargs oc --kubeconfig ${KUBECONFIG} adm certificate approve
   sleep 60
-  readyNodeCount=$(oc get node  --no-headers|grep  Ready|wc -l)
+  readyNodeCount=$(oc get node  --no-headers|grep  Ready|grep -v NotReady |wc -l )
 done 
 
 echo "Checking if image registry config exist"
@@ -51,3 +54,5 @@ oc patch scheduler cluster --patch '{"spec": {"mastersSchedulable":true}}' --typ
 
 echo "Disable OperatorHub"
 oc patch OperatorHub cluster --type json -p '[{"op": "add", "path": "/spec/disableAllDefaultSources", "value": true}]'
+
+sudo kill -9 $cleanMemoryScriptPID

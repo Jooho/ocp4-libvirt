@@ -1,8 +1,6 @@
 - name: Generate config files for terraform,ansible
   hosts: localhost
   gather_facts: no
-  become: yes
-  become_user: root
 
   vars:
     ssh_public_key_content: "{{ lookup('file', ssh_public_key_path ) }}"
@@ -34,11 +32,14 @@
       - "../../connection.tf"
       - "../../../ocp4/connection.tf"
    
+   - name: Copy pull secert 
+     shell: "cp {{pull_secret_path}} /tmp/."
+    
    - name: Update pull-secret
      shell: "{{ item }}"
      with_items:
-     - "podman login --authfile /tmp/pull-secret  -u {{quay_id}}   -p {{quay_pw}} {{quay_local_registry}} --tls-verify=false"
-     - "jq -c  '.' /tmp/pull-secret > {{pull_secret_json_path}}"
+     - "podman login --authfile /tmp/{{pull_secret_path|basename}}  -u {{quay_id}}   -p {{quay_pw}} {{quay_local_registry}} --tls-verify=false"
+     - "jq -c  '.' /tmp/{{pull_secret_path|basename}} > {{pull_secret_json_path}}"
      when: disconnected is defined
      become: false
 

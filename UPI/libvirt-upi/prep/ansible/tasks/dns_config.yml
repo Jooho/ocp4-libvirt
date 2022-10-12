@@ -26,31 +26,43 @@
     #     name: NetworkManager
     #     state: reloaded                               # restarted may be required. 
     #   become: true
-    - name: Create DNSMasq config for upi
-      template:
-        src: "../templates/dnsmasq_config.j2"
-        dest: "/etc/dnsmasq.d/{{ cluster_name }}_dns.conf"
-  
-    - name: Update DNSMasq config
-      lineinfile:
-        path: /etc/dnsmasq.conf
-        line: "listen-address={{dummy_network_ip}}"
-        create: yes
-       
-    - name: Add nameserver 
-      lineinfile:
-        path: /etc/resolv.conf
-        line: "nameserver {{dummy_network_ip}}"
-        insertbefore: "nameserver"
-        backup: true
+    - block:
+      - name: Create DNSMasq config for upi
+        template:
+          src: "../templates/dnsmasq_config.j2"
+          dest: "/etc/dnsmasq.d/{{ cluster_name }}_dns.conf"
+    
+      - name: Update DNSMasq config
+        lineinfile:
+          path: /etc/dnsmasq.conf
+          line: "listen-address={{dummy_network_ip}}"
+          create: yes
+        
+      - name: Add nameserver 
+        lineinfile:
+          path: /etc/resolv.conf
+          line: "nameserver {{dummy_network_ip}}"
+          insertbefore: "nameserver"
 
-    - name: Restart dnamasq (enable DNS changes)
-      service:
-        name: dnsmasq
-        state: restarted                               # restarted may be required. 
+      - name: Restart dnamasq (enable DNS changes)
+        service:
+          name: dnsmasq
+          state: restarted                               # restarted may be required. 
       become: true
+      when: op != 'destroy'
 
-      
+    - block:  
+      - name: Remove DSNMasq config
+        file:
+          path: "/etc/dnsmasq.d/{{ cluster_name }}_dns.conf"
+          state: absent
+
+      - name: Restart dnamasq (enable DNS changes)
+        service:
+          name: dnsmasq
+          state: stopped                               
+      become: true
+      when: op == 'destroy'
 
       
 

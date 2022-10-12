@@ -104,13 +104,16 @@
         - "{{ root_path }}/prep/bootp.xsl*"
         - "{{ root_path }}/ocp4/{{cluster_name}}"
         - "{{ root_path }}/ocp4/.terraform"
-      when: disconnected is not defined
 
-    - block:      
       - name: kill matchbox container
         shell: "podman rm --force matchbox_server"
         ignore_errors: true
         become: true
+      - name: kill clean_memory, custom_update
+        shell: "for process in $(ps -ef|grep custom|grep -v grep |awk '{print $2}'); do sudo kill -9 $process; done"
+      when: disconnected is not defined
+
+    - block:      
 
       - name: Delete binary files
         file:
@@ -126,9 +129,13 @@
         - "ip link delete {{dummy_network_interface}} type dummy"
         - "rmmod dummy"
 
+      - name: Disable attr for /etc/resolv.conf
+        shell: "chattr -i /etc/resolv.conf"
+
       - name: Delete downloaded images/dns config
         shell: "rm -rf {{ item }}"
-        with_items:        
+        with_items:   
+        - /etc/matchbox     
         - /var/www/html/*
         - /var/lib/matchbox/assets/*
         - "{{ libvirt_storage_pool_path | default('/var/lib/libvirt/images/ocp4') }}"
@@ -147,6 +154,11 @@
           state: restarted
         with_items:
         - "NetworkManager"
-        - "dnsmasq"
  
+      - name: Stop dnsmasq
+        service: 
+          name: "{{ item }}"
+          state: restarted
+        with_items:
+        - "dnsmasq"
       when: cleanAll is defined
