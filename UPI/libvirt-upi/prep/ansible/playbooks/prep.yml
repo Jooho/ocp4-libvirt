@@ -4,8 +4,8 @@
 - name: Download essential files
   import_playbook: ../tasks/download_files.yml
 
-# - name: Config DNSMasq
-#   import_playbook: ../tasks/dns_config.yml
+- name: Config DNSMasq
+  import_playbook: ../tasks/dns_config.yml
 
 - name: Config Matchbox Server
   import_playbook: ../tasks/matchbox_config.yml
