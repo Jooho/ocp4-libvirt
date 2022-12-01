@@ -88,6 +88,7 @@
         - "{{ root_path }}/prep/meta-data"
         - "{{ root_path }}/prep/user-data"
         - "{{ root_path }}/prep/terraform.tfstate.backup"
+        - "{{ root_path }}/prep/.terraform.lock.hcl"
         - "{{ root_path }}/prep/terraform.tfstate"
         - "{{ root_path }}/prep/terraform.tfvars"
         - "{{ root_path }}/prep/ansible/inventory" 

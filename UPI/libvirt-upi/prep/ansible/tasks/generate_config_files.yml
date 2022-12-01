@@ -17,8 +17,11 @@
 
    - name: Create bin folder
      file: 
-        path: "../bin"
+        path: "{{ item }}"
         state: directory
+     with_items:
+     - "../bin"
+
       
   tasks:
    - name: Create terraform.tfvar file for prep

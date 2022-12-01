@@ -7,11 +7,13 @@ provider "matchbox" {
   ca          = file("~/.matchbox/ca.crt")
 }
 
-# terraform {
-#   required_providers {
-#     matchbox = {
-#       source = "poseidon/matchbox"
-#       version = "0.5.2"
-#     }
-#   }
-# }
+terraform {
+  required_providers {
+    matchbox = {
+      source = "poseidon/matchbox"
+      version = "0.5.2"
+    }
+    
+  }
+}
+

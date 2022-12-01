@@ -8,14 +8,6 @@
    - terraform_binary:
        src: "https://releases.hashicorp.com/terraform/0.15.0/terraform_0.15.0_linux_amd64.zip"
        dest: "{{ lookup('env','HOME') }}/.local/bin"
-  
-   - terraform_provider_libvirt:
-       src: "https://github.com/dmacvicar/terraform-provider-libvirt/releases/download/v0.6.14/terraform-provider-libvirt_0.6.14_linux_amd64.zip"
-       dest: "{{ lookup('env','HOME') }}/.terraform.d/plugins"
-
-   - terraform_provider_matchbox:
-       src: "https://github.com/poseidon/terraform-provider-matchbox/releases/download/v0.5.2/terraform-provider-matchbox_0.5.2_linux_amd64.zip"
-       dest: "{{ lookup('env','HOME') }}/.terraform.d/plugins"
 
    - rhcos_kernel:
        src: "{{ rhcos_kernel_src }}"
@@ -38,19 +30,24 @@
        dest: "{{ lookup('env','PWD') }}"
 
   pre_tasks:
-    - set_fact:
-        libvirt_dir: "{{ terraform_provider_libvirt.src  |  urlsplit('path') }}"
-        matchbox_dir: "{{ terraform_provider_matchbox.src  |  urlsplit('path') }}"
+    # - set_fact:
+    #     libvirt_dir: "{{ terraform_provider_libvirt.src  |  urlsplit('path') }}"
+    #     matchbox_dir: "{{ terraform_provider_matchbox.src  |  urlsplit('path') }}"
+    #     template_dir: "{{ terraform_provider_template.src  |  urlsplit('path') }}"
+
+    # - debug:
+    #     msg: "{{template_dir}}"
+    # - debug:
+    #     msg: "{{ template_dir|regex_search('[0-9].[0-9].[0-9]+') }}"
     - name: Create directories
       file: 
         path: "{{ item }}"
         state: directory
       with_items:
       - "{{ terraform_binary.dest | dirname }}"
-      - "{{ terraform_provider_libvirt.dest | dirname }}/registry.terraform.io/hashicorp/libvirt/{{ libvirt_dir|regex_search('[0-9].[0-9].[0-9]+') }}/linux_amd64"
-      - "{{ terraform_provider_matchbox.dest | dirname }}/registry.terraform.io/hashicorp/matchbox/{{ matchbox_dir|regex_search('[0-9].[0-9].[0-9]+') }}/linux_amd64"
       - "{{ rhcos_kernel.dest | dirname }}"
       - "{{ webserver_doc_path }}"
+      become: false
 
   tasks:
     - name: Download terraform binary & libvirt provider
@@ -61,8 +58,6 @@
         remote_src: yes
       with_items:
       - "{{ terraform_binary }}"
-      - "{{ terraform_provider_libvirt }}"
-      - "{{ terraform_provider_matchbox }}"
       - "{{ matchbox_git_repo }}"
 
     - name: Check if openshift-install exist
@@ -80,39 +75,51 @@
       - "{{ openshift_installer }}"
       when: not openshift_installer_exist.stat.exists
 
-    # - name: Check if libvirt provider exist    
-    #   stat:
-    #     path: "{{ terraform_provider_libvirt.dest }}/registry.terraform.io/hashicorp/libvirt"
-    #   register: libvirt_provider_exist
+#Reference from terraform 0.13, terraform help downloading provider automatcially
+    # # - name: Check if libvirt provider exist    
+    # #   stat:
+    # #     path: "{{ terraform_provider_libvirt.dest }}/registry.terraform.io/hashicorp/libvirt"
+    # #   register: libvirt_provider_exist
 
-    - name: Move libvirt provider
-      copy:
-        src: "{{ terraform_provider_libvirt.dest }}/terraform-provider-libvirt_{{ libvirt_dir|regex_search('v[0-9].[0-9].[0-9]+') }}"
-        dest: "{{ terraform_provider_libvirt.dest | dirname }}/registry.terraform.io/hashicorp/libvirt/{{ libvirt_dir|regex_search('[0-9].[0-9].[0-9]+') }}/linux_amd64/terraform-provider-libvirt_{{ libvirt_dir|regex_search('v[0-9].[0-9].[0-9]+') }}"
-        mode: '0777'
+    # - name: Move libvirt provider
+    #   copy:
+    #     src: "{{ terraform_provider_libvirt.dest }}/terraform-provider-libvirt_{{ libvirt_dir|regex_search('v[0-9].[0-9].[0-9]+') }}"
+    #     dest: "{{ terraform_provider_libvirt.dest | dirname }}/registry.terraform.io/hashicorp/libvirt/{{ libvirt_dir|regex_search('[0-9].[0-9].[0-9]+') }}/linux_amd64/terraform-provider-libvirt_{{ libvirt_dir|regex_search('v[0-9].[0-9].[0-9]+') }}"
+    #     mode: '0777'
 
-    - name: Remove libvirt file
-      file:
-        path: "{{ terraform_provider_libvirt.dest }}/terraform-provider-libvirt_{{ libvirt_dir|regex_search('v[0-9].[0-9].[0-9]+') }}"
-        state: absent
+    # - name: Remove libvirt file
+    #   file:
+    #     path: "{{ terraform_provider_libvirt.dest }}/terraform-provider-libvirt_{{ libvirt_dir|regex_search('v[0-9].[0-9].[0-9]+') }}"
+    #     state: absent
 
-    # - name: Check if matachbox provider exist    
-    #   stat:
-    #     path: "{{ terraform_provider_matchbox.dest }}/registry.terraform.io/hashicorp/matchbox"
-    #   register: matchbox_provider_exist
+    # # - name: Check if matachbox provider exist    
+    # #   stat:
+    # #     path: "{{ terraform_provider_matchbox.dest }}/registry.terraform.io/hashicorp/matchbox"
+    # #   register: matchbox_provider_exist
 
-    - name: Move matchbox provider
-      copy:
-        src: "{{ terraform_provider_matchbox.dest }}/terraform-provider-matchbox_{{ matchbox_dir|regex_search('v[0-9].[0-9].[0-9]+') }}"
-        dest: "{{ terraform_provider_matchbox.dest | dirname }}/registry.terraform.io/hashicorp/matchbox/{{ matchbox_dir|regex_search('[0-9].[0-9].[0-9]+') }}/linux_amd64//terraform-provider-matchbox_{{ matchbox_dir|regex_search('v[0-9].[0-9].[0-9]+') }}"
-        mode: '0777'
-      # when: matchbox_provider_exist.stat.exists == False
+    # - name: Move matchbox provider
+    #   copy:
+    #     src: "{{ terraform_provider_matchbox.dest }}/terraform-provider-matchbox_{{ matchbox_dir|regex_search('v[0-9].[0-9].[0-9]+') }}"
+    #     dest: "{{ terraform_provider_matchbox.dest | dirname }}/registry.terraform.io/hashicorp/matchbox/{{ matchbox_dir|regex_search('[0-9].[0-9].[0-9]+') }}/linux_amd64/terraform-provider-matchbox_{{ matchbox_dir|regex_search('v[0-9].[0-9].[0-9]+') }}"
+    #     mode: '0777'
+    #   # when: matchbox_provider_exist.stat.exists == False
 
-    - name: Remove matchbox file
-      file:
-        path: "{{ terraform_provider_matchbox.dest }}/terraform-provider-matchbox_{{ matchbox_dir|regex_search('v[0-9].[0-9].[0-9]+') }}"
-        state: absent
+    # - name: Remove matchbox file
+    #   file:
+    #     path: "{{ terraform_provider_matchbox.dest }}/terraform-provider-matchbox_{{ matchbox_dir|regex_search('v[0-9].[0-9].[0-9]+') }}"
+    #     state: absent
  
+    # - name: Move template provider
+    #   copy:
+    #     src: "{{ terraform_provider_template.dest }}/terraform-provider-template_v{{ template_dir|regex_search('[0-9].[0-9].[0-9]+') }}_x4"
+    #     dest: "{{ terraform_provider_template.dest | dirname }}/registry.terraform.io/hashicorp/template/{{ template_dir|regex_search('[0-9].[0-9].[0-9]+') }}/linux_amd64/terraform-provider-template_{{ libvirt_dir|regex_search('v[0-9].[0-9].[0-9]+') }}"
+    #     mode: '0777'
+
+    # - name: Remove template file
+    #   file:
+    #     path: "{{ terraform_provider_template.dest }}/terraform-provider-template_v{{ template_dir|regex_search('[0-9].[0-9].[0-9]+') }}_x4"
+    #     state: absent
+
     - name: Download RHCOS kernal and initramfs
       get_url:
         url: "{{ item.src }}"
