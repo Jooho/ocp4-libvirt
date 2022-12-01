@@ -18,7 +18,7 @@ from io import StringIO
               type=click.Choice(['apply', 'dtr']))
 @click.option('-c','--component',
               default='config',
-              type=click.Choice(['matchbox', 'ocp', 'quay','download','config','auto','all']))
+              type=click.Choice(['ocp', 'prep', 'matchbox', 'quay','download','config','auto','all']))
 @click.help_option('--help', '-h')
 @click.option('-v', '--verbose', count=True)
 def launch(cmd=None,
