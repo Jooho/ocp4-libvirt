@@ -31,7 +31,7 @@
    
    - openshift_installer:
        src: "{{ openshift_installer_src }}"
-       dest: "../../bin"
+       dest: "../bin"
 
    - matchbox_git_repo:
        src: "https://github.com/poseidon/matchbox/archive/master.zip"
@@ -65,7 +65,12 @@
       - "{{ terraform_provider_matchbox }}"
       - "{{ matchbox_git_repo }}"
 
-    - name: Download openshift-install if it is not for disconnected installation
+    - name: Check if openshift-install exist
+      stat:
+        path: "{{ openshift_installer.dest }}/openshift-install"
+      register: openshift_installer_exist
+
+    - name: Download openshift-install
       unarchive:
         src: "{{ item.src }}" 
         dest: "{{ item.dest }}"
@@ -73,7 +78,7 @@
         remote_src: yes
       with_items:
       - "{{ openshift_installer }}"
-      when: disconnected is not defined
+      when: not openshift_installer_exist.stat.exists
 
     # - name: Check if libvirt provider exist    
     #   stat:

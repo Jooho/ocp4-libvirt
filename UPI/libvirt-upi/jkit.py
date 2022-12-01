@@ -9,19 +9,23 @@ from io import StringIO
 @click.command()
 @click.argument('cmd',
               default='init',
-              type=click.Choice(['init', 'prep', 'ocp', 'quay','update', 'clean', 'oneshot' , 'post','dns']))
+              type=click.Choice(['init', 'prep', 'ocp', 'quay','update', 'clean', 'oneshot' , 'post','dns','auto']))
 @click.option('-t','--type',
               default='inventory',
-              type=click.Choice(['inventory', 'ocp', 'all', 'conf','disconnect']))
+              type=click.Choice(['inventory', 'ocp', 'conf','disconnect']))
 @click.option('-op','--operate',
               default='apply',
               type=click.Choice(['apply', 'dtr']))
+@click.option('-c','--component',
+              default='config',
+              type=click.Choice(['matchbox', 'ocp', 'quay','download','config','auto','all']))
 @click.help_option('--help', '-h')
 @click.option('-v', '--verbose', count=True)
 def launch(cmd=None,
            operate=None,
            status=None,
            type=None,
+           component=None,
            clusterName=None,
            verbose=0):
 
@@ -41,18 +45,17 @@ def launch(cmd=None,
 
     if type == 'disconnect':
        disconnected="-e disconnected=true"
-    if type == 'all':
-       cleanAll="-e cleanAll=true"
-       
+    
+    clean_component="-e clean_component={}".format(component)   
 # Construct ansible command
     if cmd == 'init':
        status = os.system(
-         'ansible-playbook %s  -i config prep/ansible/tasks/setting_init_env.yml %s --flush-cache; \
+         'ansible-playbook %s  -i config prep/ansible/tasks/setting_init_env.yml --flush-cache; \
          ansible-playbook %s  -i config prep/ansible/tasks/generate_config_files.yml %s --flush-cache; \
          cd prep;  \
          ansible-playbook %s  -i ansible/inventory ansible/tasks/cloud_init.yml  --flush-cache' \
 
-                % (verbosity, disconnected, verbosity, disconnected, verbosity )
+                % (verbosity, verbosity, disconnected, verbosity )
        )
 
     if cmd == 'prep':
@@ -72,6 +75,11 @@ def launch(cmd=None,
             terraform destroy -auto-approve' 
           )
 
+    if cmd == 'auto':
+         status = os.system(
+         'prep/upi/custom-update.sh &'
+         )
+         
     if cmd == 'ocp':
        if operate == 'apply':
           status = os.system(
@@ -79,8 +87,7 @@ def launch(cmd=None,
             terraform init ; \
             terraform get ; \
             terraform apply -auto-approve ;\
-            cd ../prep; ./upi/custom-update.sh; \
-            sudo ./ansible/bin/openshift-install --dir %s wait-for bootstrap-complete; cd ../'
+            cd ../prep; sudo ./ansible/bin/openshift-install --dir %s wait-for bootstrap-complete; cd ../'
              
                 % (clusterName)
           )
@@ -152,17 +159,30 @@ def launch(cmd=None,
 
 
     if cmd == 'clean':
-      # status = os.system(
-      # 'cd prep; ansible-playbook %s  -i ansible/inventory  ansible/tasks/test.yaml %s %s --flush-cache'
-      #          % (verbosity, cleanAll, disconnected)
-      # )
-      
-      status = os.system(
-      'cd ocp4 ; terraform destroy -auto-approve ; \
-         cd ../prep ; terraform destroy -auto-approve ; \
-         ansible-playbook %s -i ../config ansible/tasks/clean.yml %s %s --flush-cache'
-               % (verbosity, cleanAll, disconnected)
+       if component in ['ocp','all']:
+          status = os.system(
+            'cd ocp4 ; terraform destroy -auto-approve'
+          )
+       
+       if component in ['prep','all']:
+          status = os.system(
+            'cd prep ; terraform destroy -auto-approve'
+          )
+        
+       if component in ['auto','all']:
+          status = os.system(
+            "hacks/clean_auto.sh"
+          )     
+          
+       if component not in ['ocp','prep']:
+         status = os.system(
+         'cd prep;ansible-playbook %s -i ../config ansible/tasks/clean.yml  %s --flush-cache'
+               % (verbosity, clean_component)
       )
+      
+      
+      
+      
     if cmd == 'dns':
        if operate == 'apply':
          status = os.system(

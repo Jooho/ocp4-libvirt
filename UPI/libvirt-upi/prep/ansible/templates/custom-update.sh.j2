@@ -30,7 +30,7 @@ sudo /tmp/clean_memory.sh &
 cleanMemoryScriptPID=$!
 
 
-export KUBECONFIG=./prep/${cluster_name}/auth/kubeconfig
+export KUBECONFIG=prep/{{cluster_name}}/auth/kubeconfig
 export readyNodeCount=$(oc get node  --no-headers|grep Ready |grep -v NotReady|wc -l)
 
 echo "Checking if all nodes are Ready"

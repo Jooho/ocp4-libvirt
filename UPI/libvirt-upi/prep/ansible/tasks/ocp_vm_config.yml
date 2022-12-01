@@ -12,6 +12,8 @@
       file:
         path: "../../{{cluster_name}}/"
         state: directory
+    - name: refresh inventory
+      meta: refresh_inventory
 
   tasks:
     # - name: Build openshift-install for disconnected installation

@@ -13,7 +13,13 @@
      with_items:
      - "{{pull_secret_path|basename}}"
      - "pull-secret"
-        
+     become: true
+
+   - name: Create bin folder
+     file: 
+        path: "../bin"
+        state: directory
+      
   tasks:
    - name: Create terraform.tfvar file for prep
      template:

@@ -7,22 +7,6 @@
     
   tasks:
     - block:
-      - name: Delete files/folders related with matchbox
-        shell: "rm -rf {{ item }}"
-        with_items:
-        - /etc/matchbox
-        - ~/.matchbox
-        - /var/www/html/*.ign
-        - "{{ root_path }}/prep/matchbox-main"
-
-      - name: Kill matchbox container
-        shell: "podman rm --force matchbox_server"
-        ignore_errors: true
-      - name: kill clean_memory, custom_update
-        shell: "for process in $(ps -ef|grep custom|grep -v grep |awk '{print $2}'); do sudo kill -9 $process; done"
-      when: clean_component == 'matchbox' or clean_component == 'all' 
-    
-    - block:
       - name: Check if quay registry is running
         shell: "podman ps |grep quay-app|wc -l"
         register: quay_registry_status
@@ -47,8 +31,13 @@
         - "{{ root_path }}/prep/ansible/tasks/quay.tar"
         - "{{ root_path }}/prep/ansible/tasks/postgres.tar"
         - "{{ root_path }}/prep/ansible/tasks/redis.tar"
-      when: clean_component == 'quay' or clean_component == 'all' 
-      
+
+      when: disconnected is defined or cleanAll is defined  
+      become: true
+    #- name: kill matchbox container
+    #  docker_container:
+    #    name: matchbox_server
+    #    state: absent
 
     - block:
       - name: Remove ssh known_hosts
@@ -90,6 +79,7 @@
         - "{{ root_path }}/prep/terraform.tfstate.backup"
         - "{{ root_path }}/prep/terraform.tfstate"
         - "{{ root_path }}/prep/terraform.tfvars"
+        - "{{ root_path }}/prep/matchbox-main"
         - "{{ root_path }}/prep/ansible/inventory" 
         - "{{ root_path }}/ocp4/connection.tf"
         - "{{ root_path }}/ocp4/ocp_module.tf"
@@ -104,6 +94,7 @@
         - "{{ root_path }}/prep/ansible/inventory"
         - "{{ root_path }}/prep/terraform.tfvars"
 
+
       - name: Delete folder
         shell: "rm -rf {{ item }}"
         with_items:
@@ -113,18 +104,19 @@
         - "{{ root_path }}/prep/bootp.xsl*"
         - "{{ root_path }}/ocp4/{{cluster_name}}"
         - "{{ root_path }}/ocp4/.terraform"
-      when: clean_component == 'config' or clean_component == 'all' 
+        - "/etc/matchbox"
+        - "~/.matchbox"
 
-    - block:
-      - name: Delete downloaded images/dns config
-        shell: "rm -rf {{ item }}"
-        with_items:   
-        - "{{ libvirt_storage_pool_path | default('/var/lib/libvirt/images/ocp4') }}"      
-        - /var/lib/matchbox/assets/*
-        - /var/www/html/*.ign
-      when: clean_component == 'download' or clean_component == 'all' 
+      - name: kill matchbox container
+        shell: "podman rm --force matchbox_server"
+        ignore_errors: true
+        become: true
+      - name: kill clean_memory, custom_update
+        shell: "for process in $(ps -ef|grep custom|grep -v grep |awk '{print $2}'); do sudo kill -9 $process; done"
+      when: disconnected is not defined
 
-    - block:
+    - block:      
+
       - name: Delete binary files
         file:
           path: "{{ item }}"
@@ -145,6 +137,10 @@
       - name: Delete downloaded images/dns config
         shell: "rm -rf {{ item }}"
         with_items:   
+        - /etc/matchbox     
+        - /var/www/html/*
+        - /var/lib/matchbox/assets/*
+        - "{{ libvirt_storage_pool_path | default('/var/lib/libvirt/images/ocp4') }}"
         - /etc/dnsmasq.d/{{ cluster_name }}_dns.conf
         - /etc/resolv.conf
 
@@ -154,12 +150,12 @@
           line: "listen-address={{dummy_network_ip}}"
           state: absent
 
-      # - name: Restart NetworkManager/dnsmasq
-      #   service: 
-      #     name: "{{ item }}"
-      #     state: restarted
-      #   with_items:
-      #   - "NetworkManager"
+      - name: Restart NetworkManager/dnsmasq
+        service: 
+          name: "{{ item }}"
+          state: restarted
+        with_items:
+        - "NetworkManager"
  
       - name: Stop dnsmasq
         service: 
@@ -167,4 +163,4 @@
           state: restarted
         with_items:
         - "dnsmasq"
-      when: clean_component == 'all' 
+      when: cleanAll is defined
