@@ -10,6 +10,7 @@
   pre_tasks:
     - name: Gather network info
       virt_net:
+        name: "{{cluster_name}}"
         command: facts
         
     - name: Gather network Id 
