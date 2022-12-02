@@ -40,5 +40,16 @@ terraform {
   required_version = ">= 0.11"
 }
 
+terraform {
+  required_providers {
+    template = {
+      source = "hashicorp/template"
+      version = "2.2.0"
+    }
 
-
+    libvirt = {
+      source = "dmacvicar/libvirt"
+      version = "0.7.0"
+    }
+  }
+}
