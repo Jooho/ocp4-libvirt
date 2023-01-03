@@ -139,6 +139,7 @@
         - "ip addr del {{dummy_network_ip}}/24 brd + dev {{dummy_network_interface}} label {{dummy_network_interface}}:0"
         - "ip link delete {{dummy_network_interface}} type dummy"
         - "rmmod dummy"
+        ignore_errors: true
 
       - name: Disable attr for /etc/resolv.conf
         shell: "chattr -i /etc/resolv.conf"
@@ -165,7 +166,7 @@
       - name: Stop dnsmasq
         service: 
           name: "{{ item }}"
-          state: restarted
+          state: stopped
         with_items:
         - "dnsmasq"
       when: clean_component == 'all' 
