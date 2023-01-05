@@ -47,7 +47,7 @@
       - "{{ terraform_binary.dest | dirname }}"
       - "{{ rhcos_kernel.dest | dirname }}"
       - "{{ webserver_doc_path }}"
-      become: false
+      become: true
 
   tasks:
     - name: Download terraform binary & libvirt provider

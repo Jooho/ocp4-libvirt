@@ -22,12 +22,19 @@
   - name: Copy pull secert 
     shell: "cp {{pull_secret_path}} /tmp/."
     
+  - name: Add nameserver 
+    lineinfile:
+      path: /etc/resolv.conf
+      line: "nameserver {{dummy_network_ip}}"
+      insertbefore: "nameserver"
+
+  - name: enable attr for /etc/resolv.conf
+    shell: "chattr +i /etc/resolv.conf"
+
   - name: Check if mirror_registry exist
     stat:
       path: ../bin/mirror-registry
     register: mirror_registry_cli
-
-  - shell: pwd
 
   - name: Download Mirror Registry CLI
     unarchive:
@@ -68,15 +75,6 @@
       with_items:
       - "cp /etc/quay-install/quay-rootCA/rootCA.pem   /etc/pki/ca-trust/source/anchors/"
       - "update-ca-trust extract"
-
-    - name: Add nameserver 
-      lineinfile:
-        path: /etc/resolv.conf
-        line: "nameserver {{dummy_network_ip}}"
-        insertbefore: "nameserver"
-
-    - name: enable attr for /etc/resolv.conf
-      shell: "chattr +i /etc/resolv.conf"
 
     - name: Login to local quay
       shell: "podman login --authfile /tmp/{{pull_secret_path|basename}}  -u {{quay_id}} -p {{quay_pw}}  {{quay_local_registry}} "

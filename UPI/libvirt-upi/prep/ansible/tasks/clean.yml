@@ -148,6 +148,10 @@
         shell: "rm -rf {{ item }}"
         with_items:   
         - /etc/dnsmasq.d/{{ cluster_name }}_dns.conf
+
+      - name: Delete downloaded images/dns config
+        shell: "mv {{ item }} {{item}}_bak"
+        with_items:   
         - /etc/resolv.conf
 
       - name: Update DNSMasq config
