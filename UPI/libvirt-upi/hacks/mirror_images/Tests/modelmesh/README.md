@@ -22,9 +22,11 @@ oc get secret storage-config -o yaml -n minio
 ![deploy model 2](images/deploy_model_server_2.png)
 
 **TEST**
+~~~
 oc create -f sa_user.yaml
 export Token=$(oc sa new-token user-one)
 export HOST_NAME=$(oc get route test -n test -ojsonpath='{.spec.host}')
 export HOST_PATH=$(oc get route test -n test -ojsonpath='{.spec.path}')
 
 curl  -H "Authorization: Bearer ${Token}" --silent --location --fail --show-error --insecure https://${HOST_NAME}${HOST_PATH}/infer -d @input-onnx.json
+~~~
