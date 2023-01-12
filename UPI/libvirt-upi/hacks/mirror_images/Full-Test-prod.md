@@ -7,7 +7,7 @@ export quay_local_registry_url=local-quay.example.com
 export quay_local_registry_port=443
 export quay_root_ca=/etc/quay-install/quay-rootCA/rootCA.pem
 export pull_secret_path=${test_home}/osia-configuration/ps.json
-export catalogsource_url=brew.registry.redhat.io/rh-osbs/iib:408697
+export catalogsource_url=registry.redhat.io/redhat/redhat-operator-index:v4.11
 
 mkdir ${test_home}
 cd ${test_home}
@@ -25,7 +25,7 @@ git crypt unlock ~/Documents/osia-key.key
 # Install CRC 
 ~~~
 crc setup
-crc config set memory 40000
+crc config set memory 35000
 crc config set cpus 10
 crc config set disk-size 70
 crc config set kubeadmin-password kubeadmin
@@ -40,7 +40,7 @@ wget https://developers.redhat.com/content-gateway/rest/mirror/pub/openshift-v4/
 
 tar xvf mirror-registry.tar.gz
 
-# Add dummy network
+# Add dummy network(optional)
 sudo modprobe dummy
 sudo ip link add eth0 type dummy
 ip link show eth0 
@@ -132,22 +132,6 @@ cd ${test_home}
 
 oc adm release mirror -a ${pull_secret_path} --from=quay.io/openshift-release-dev/ocp-release:4.11.13-x86_64 --to=local-quay.example.com:443/ocp4/openshift4 --to-release-image=local-quay.example.com:443/ocp4/openshift4:4.11.13-x86_64 --skip-verification=true
 
-cat <<EOF | oc apply -f -
-apiVersion: operator.openshift.io/v1alpha1
-kind: ImageContentSourcePolicy
-metadata:
-  name: ocp4
-spec:
-  repositoryDigestMirrors:
-  - mirrors:
-    - local-quay.example.com:443/ocp4/openshift4
-    source: quay.io/openshift-release-dev/ocp-release
-  - mirrors:
-    - local-quay.example.com:443/ocp4/openshift4
-    source: quay.io/openshift-release-dev/ocp-v4.0-art-dev
-EOF
-
-
 cat <<EOF > ${test_home}/imageset-config.yaml 
 kind: ImageSetConfiguration
 apiVersion: mirror.openshift.io/v1alpha2
@@ -170,11 +154,11 @@ mirror:
       - name: stable
       - name: beta
   additionalImages:
-  - name: quay.io/modh/cuda-notebooks:cuda-jupyter-minimal-ubi8-python-3.8-c41c603
-  - name: quay.io/modh/cuda-notebooks:cuda-jupyter-pytorch-ubi8-python-3.8-c41c603	
-  - name: quay.io/modh/odh-generic-data-science-notebook@sha256:ebb5613e6b53dc4e8efcfe3878b4cd10ccb77c67d12c00d2b8c9d41aeffd7df5
+  - name: quay.io/modh/cuda-notebooks@sha256:492c37fb4b71c07d929ac7963896e074871ded506230fe926cdac21eb1ab9db8
+  - name: quay.io/modh/cuda-notebooks@sha256:43e5b026b5a5b19644dd86924bc826d46c3aead452bcd56021c77d2b8b230a9a
+  - name: quay.io/modh/cuda-notebooks@sha256:2163ba74f602ec4b3049a88dcfa4fe0a8d0fff231090001947da66ef8e75ab9a
+  - name: quay.io/modh/odh-generic-data-science-notebook@sha256:1f7f046d6de8dd5e49c119d78ee3596c0a2836c73d1783bb7750b9b7fa64848e
   - name: quay.io/modh/odh-minimal-notebook-container@sha256:a5a7738b09a204804e084a45f96360b568b0b9d85709c0ce6742d440ff917183
-  - name: quay.io/modh/cuda-notebooks:cuda-jupyter-tensorflow-ubi8-python-3.8-c41c603
   - name: quay.io/modh/must-gather:v1.0.0
   - name: quay.io/opendatahub/modelmesh-minio-examples:v0.8.0
   - name: registry.redhat.io/rhel8/support-tools
@@ -182,12 +166,22 @@ EOF
 
 oc mirror --config=${test_home}/imageset-config.yaml   docker://${quay_local_registry_url}:${quay_local_registry_port}/mirror/oc-mirror-metadata   --continue-on-error 
 
-cp oc-mirror-workspace/results-*/mapping.txt .
-sed 's/^registry.redhat.io\/rhods/brew.registry.redhat.io\/rhods/g' mapping.txt |grep brew> mapping-brew.txt
-
-oc image mirror -a ${pull_secret_path} -f mapping-brew.txt --filter-by-os='.*' --continue-on-error || true
-
 oc create -f  oc-mirror-workspace/results-* 
+
+cat <<EOF | oc apply -f -
+apiVersion: operator.openshift.io/v1alpha1
+kind: ImageContentSourcePolicy
+metadata:
+  name: ocp4
+spec:
+  repositoryDigestMirrors:
+  - mirrors:
+    - local-quay.example.com:443/ocp4/openshift4
+    source: quay.io/openshift-release-dev/ocp-release
+  - mirrors:
+    - local-quay.example.com:443/ocp4/openshift4
+    source: quay.io/openshift-release-dev/ocp-v4.0-art-dev
+EOF
 ~~~
 
 # NFS Provioner
@@ -259,8 +253,8 @@ metadata:
   name: rhods-operator-dev
 spec:
   name: rhods-operator
-  channel: beta
-  source: iib
+  channel: stable
+  source: redhat-operator-index
   sourceNamespace: openshift-marketplace
 EOF
 ~~~
