@@ -296,4 +296,19 @@ rm mapping.txt mapping-brew.txt
 ~~~
 "local-quay.example.com:443/mirror/oc-mirror-metadata/rh-osbs/iib:412381": rpc error: code = Unknown desc = pinging container registry local-quay.example.com:443: Get "http://local-quay.example.com:443/v2/": EOF
 ~~~
-- try to add local-quay.example.com into /etc/hosts
+ - check points try to add local-quay.example.com into /etc/hosts
+   ~~~
+   cat /etc/hosts  
+   192.168.1.100 local-quay.example.com    <== must not 127.0.0.1
+   ~~~
+   
+   If it did not solve the issue, add local-quay.example.com into /etc/hosts in the crc vm
+   
+   ~~~
+   From crc node
+   export target_node=$(oc get node -l node-role.kubernetes.io/worker= --no-headers -o name |head -1|cut -d'/' -f2)
+   oc debug node/${target_node}
+
+   chroot /host
+   echo "192.168.1.100 local-quay.example.com" >> /etc/hosts
+   ~~~
