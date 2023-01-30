@@ -220,13 +220,13 @@ oc label node/${target_node} app=nfs-provisioner
 
 # ssh to the node
 oc debug node/${target_node}
-
+''
 # Create a directory and set up the Selinux label.
  chroot /host
  mkdir -p /home/core/nfs
  chcon -Rvt svirt_sandbox_file_t /home/core/nfs
  exit; exit
-
+''
 # Create NFSProvisioner Custom Resource
 cat << EOF | oc apply -f -  
 apiVersion: cache.jhouse.com/v1alpha1

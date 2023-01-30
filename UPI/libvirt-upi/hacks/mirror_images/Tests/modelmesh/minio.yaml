@@ -31,5 +31,5 @@ spec:
           value:  THEACCESSKEY
         - name: MINIO_SECRET_KEY
           value: <secretkey>
-      image: quay.io/opendatahub/modelmesh-minio-examples@sha256:f65e4f236df53ef01af00c8fe89e237d1628dce1520f6c4e512bf8febb6f7ea8
+      image: quay.io/jooholee/modelmesh-minio-examples:openvino
       name: minio
